@@ -8,6 +8,8 @@ const DEFAULT_STATE = {
     pageInfo: { totalCount: 0 },
     error: null,
   },
+  isCreating: false,
+  createError: null,
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -43,6 +45,12 @@ const reducer = (state = DEFAULT_STATE, action) => {
           error: formatServerError(action.payload),
         },
       };
+    case "MEDICAL_CONTROLLER_MISSION_CREATE_REQ":
+      return { ...state, isCreating: true, createError: null };
+    case "MEDICAL_CONTROLLER_MISSION_CREATE_RESP":
+      return { ...state, isCreating: false, createError: null };
+    case "MEDICAL_CONTROLLER_MISSION_CREATE_ERR":
+      return { ...state, isCreating: false, createError: formatServerError(action.payload) };
     default:
       return state;
   }
