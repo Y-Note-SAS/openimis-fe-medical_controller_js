@@ -25,12 +25,12 @@ import { MODULE_NAME } from "../constants";
 
 const styles = (theme) => ({
   dialogTitle: {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
     paddingBottom: theme.spacing(1),
   },
   titleText: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.primary,
     fontWeight: 600,
   },
   dialogContent: {
@@ -181,7 +181,6 @@ const CreateMissionDialog = (props) => {
       newErrors.endDate = fmt("createMission.error.endDateRequired");
     }
     
-    // Vérifier que la date de fin est après la date de début
     if (form.startMonth && form.startYear && form.endMonth && form.endYear) {
       const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1);
       const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1);
@@ -197,10 +196,8 @@ const CreateMissionDialog = (props) => {
   const handleSubmit = () => {
     if (!validate()) return;
 
-    // Construire les dates complètes
     const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1, 1);
     const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1, 1);
-    // Dernier jour du mois pour endDate
     const lastDayOfMonth = new Date(parseInt(form.endYear), parseInt(form.endMonth), 0);
     endDate.setDate(lastDayOfMonth.getDate());
 
@@ -221,6 +218,24 @@ const CreateMissionDialog = (props) => {
     setForm(EMPTY_STATE);
     setErrors({});
     onClose();
+  };
+
+  const handleMonthChange = (field, value) => {
+    if (value === "" || /^[0-9]{1,2}$/.test(value)) {
+      const num = parseInt(value);
+      if (value === "" || (num >= 1 && num <= 12)) {
+        updateField(field, value);
+      }
+    }
+  };
+
+  const handleYearChange = (field, value) => {
+    if (value === "" || /^[0-9]{1,4}$/.test(value)) {
+      const num = parseInt(value);
+      if (value === "" || num > 0) {
+        updateField(field, value);
+      }
+    }
   };
 
   return (
@@ -285,7 +300,6 @@ const CreateMissionDialog = (props) => {
             )}
           </Grid>
 
-          {/* Start Date - MM YYYY */}
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <div className={classes.dateLabel}>
@@ -295,12 +309,7 @@ const CreateMissionDialog = (props) => {
                 <TextField
                   className={classes.monthField}
                   value={form.startMonth}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
-                      updateField("startMonth", val);
-                    }
-                  }}
+                  onChange={(e) => handleMonthChange("startMonth", e.target.value)}
                   placeholder="MM"
                   variant="outlined"
                   size="small"
@@ -313,12 +322,7 @@ const CreateMissionDialog = (props) => {
                 <TextField
                   className={classes.yearField}
                   value={form.startYear}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || (parseInt(val) > 0 && val.length <= 4)) {
-                      updateField("startYear", val);
-                    }
-                  }}
+                  onChange={(e) => handleYearChange("startYear", e.target.value)}
                   placeholder="YYYY"
                   variant="outlined"
                   size="small"
@@ -337,7 +341,6 @@ const CreateMissionDialog = (props) => {
             </div>
           </Grid>
 
-          {/* End Date - MM YYYY */}
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <div className={classes.dateLabel}>
@@ -347,12 +350,7 @@ const CreateMissionDialog = (props) => {
                 <TextField
                   className={classes.monthField}
                   value={form.endMonth}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
-                      updateField("endMonth", val);
-                    }
-                  }}
+                  onChange={(e) => handleMonthChange("endMonth", e.target.value)}
                   placeholder="MM"
                   variant="outlined"
                   size="small"
@@ -365,12 +363,7 @@ const CreateMissionDialog = (props) => {
                 <TextField
                   className={classes.yearField}
                   value={form.endYear}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || (parseInt(val) > 0 && val.length <= 4)) {
-                      updateField("endYear", val);
-                    }
-                  }}
+                  onChange={(e) => handleYearChange("endYear", e.target.value)}
                   placeholder="YYYY"
                   variant="outlined"
                   size="small"
