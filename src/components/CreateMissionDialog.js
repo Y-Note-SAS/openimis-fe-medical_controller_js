@@ -10,6 +10,7 @@ import {
   Divider,
   Grid,
   Typography,
+  TextField,
 } from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
 import {
@@ -59,14 +60,62 @@ const styles = (theme) => ({
     paddingRight: theme.spacing(2),
     paddingBottom: theme.spacing(1),
   },
+  dateGroup: {
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
+  },
+  dateLabel: {
+    fontSize: "0.75rem",
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(0.5),
+    fontWeight: 500,
+  },
+  datePickersRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+  },
+  monthField: {
+    width: 100,
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 6,
+      height: 40,
+    },
+    "& .MuiOutlinedInput-input": {
+      padding: "10px 14px",
+      textAlign: "center",
+      fontSize: "0.875rem",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#d1d5db",
+    },
+  },
+  yearField: {
+    width: 100,
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 6,
+      height: 40,
+    },
+    "& .MuiOutlinedInput-input": {
+      padding: "10px 14px",
+      textAlign: "center",
+      fontSize: "0.875rem",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#d1d5db",
+    },
+  },
 });
 
 const EMPTY_STATE = {
   region: null,
   district: null,
   healthFacilities: [],
-  startMonth: null,
-  endMonth: null,
+  startMonth: "",
+  startYear: "",
+  endMonth: "",
+  endYear: "",
 };
 
 const generateMockCode = () => {
@@ -125,14 +174,20 @@ const CreateMissionDialog = (props) => {
     if (!form.healthFacilities || form.healthFacilities.length === 0) {
       newErrors.healthFacilities = fmt("createMission.error.healthFacilitiesRequired");
     }
-    if (!form.startMonth) {
-      newErrors.startMonth = fmt("createMission.error.startDateRequired");
+    if (!form.startMonth || !form.startYear) {
+      newErrors.startDate = fmt("createMission.error.startDateRequired");
     }
-    if (!form.endMonth) {
-      newErrors.endMonth = fmt("createMission.error.endDateRequired");
+    if (!form.endMonth || !form.endYear) {
+      newErrors.endDate = fmt("createMission.error.endDateRequired");
     }
-    if (form.startMonth && form.endMonth && form.startMonth > form.endMonth) {
-      newErrors.endMonth = fmt("createMission.error.endBeforeStart");
+    
+    // Vérifier que la date de fin est après la date de début
+    if (form.startMonth && form.startYear && form.endMonth && form.endYear) {
+      const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1);
+      const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1);
+      if (endDate < startDate) {
+        newErrors.endDate = fmt("createMission.error.endBeforeStart");
+      }
     }
 
     setErrors(newErrors);
@@ -142,13 +197,20 @@ const CreateMissionDialog = (props) => {
   const handleSubmit = () => {
     if (!validate()) return;
 
+    // Construire les dates complètes
+    const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1, 1);
+    const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1, 1);
+    // Dernier jour du mois pour endDate
+    const lastDayOfMonth = new Date(parseInt(form.endYear), parseInt(form.endMonth), 0);
+    endDate.setDate(lastDayOfMonth.getDate());
+
     const payload = {
       code: mockCode,
       regionId: form.region?.uuid,
       districtId: form.district?.uuid ?? null,
       healthFacilityIds: form.healthFacilities.map((hf) => hf.uuid),
-      startDate: form.startMonth,
-      endDate: form.endMonth,
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
     };
 
     dispatch(createMedicalControllerMission(modulesManager, payload, onCreated));
@@ -223,36 +285,108 @@ const CreateMissionDialog = (props) => {
             )}
           </Grid>
 
-          <Grid item xs={6} className={classes.fieldItem}>
-            <PublishedComponent
-              pubRef="core.MonthYearPicker"
-              module={MODULE_NAME}
-              label="createMission.startDate"
-              value={form.startMonth}
-              required
-              onChange={(value) => updateField("startMonth", value)}
-            />
-            {errors.startMonth && (
-              <Typography className={classes.errorText}>
-                {errors.startMonth}
-              </Typography>
-            )}
+          {/* Start Date - MM YYYY */}
+          <Grid item xs={12} className={classes.fieldItem}>
+            <div className={classes.dateGroup}>
+              <div className={classes.dateLabel}>
+                {fmt("createMission.startDate")}
+              </div>
+              <div className={classes.datePickersRow}>
+                <TextField
+                  className={classes.monthField}
+                  value={form.startMonth}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
+                      updateField("startMonth", val);
+                    }
+                  }}
+                  placeholder="MM"
+                  variant="outlined"
+                  size="small"
+                  error={!!errors.startDate}
+                  inputProps={{
+                    maxLength: 2,
+                    style: { textAlign: "center" },
+                  }}
+                />
+                <TextField
+                  className={classes.yearField}
+                  value={form.startYear}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) > 0 && val.length <= 4)) {
+                      updateField("startYear", val);
+                    }
+                  }}
+                  placeholder="YYYY"
+                  variant="outlined"
+                  size="small"
+                  error={!!errors.startDate}
+                  inputProps={{
+                    maxLength: 4,
+                    style: { textAlign: "center" },
+                  }}
+                />
+              </div>
+              {errors.startDate && (
+                <Typography className={classes.errorText}>
+                  {errors.startDate}
+                </Typography>
+              )}
+            </div>
           </Grid>
 
-          <Grid item xs={6} className={classes.fieldItem}>
-            <PublishedComponent
-              pubRef="core.MonthYearPicker"
-              module={MODULE_NAME}
-              label="createMission.endDate"
-              value={form.endMonth}
-              required
-              onChange={(value) => updateField("endMonth", value)}
-            />
-            {errors.endMonth && (
-              <Typography className={classes.errorText}>
-                {errors.endMonth}
-              </Typography>
-            )}
+          {/* End Date - MM YYYY */}
+          <Grid item xs={12} className={classes.fieldItem}>
+            <div className={classes.dateGroup}>
+              <div className={classes.dateLabel}>
+                {fmt("createMission.endDate")}
+              </div>
+              <div className={classes.datePickersRow}>
+                <TextField
+                  className={classes.monthField}
+                  value={form.endMonth}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
+                      updateField("endMonth", val);
+                    }
+                  }}
+                  placeholder="MM"
+                  variant="outlined"
+                  size="small"
+                  error={!!errors.endDate}
+                  inputProps={{
+                    maxLength: 2,
+                    style: { textAlign: "center" },
+                  }}
+                />
+                <TextField
+                  className={classes.yearField}
+                  value={form.endYear}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (parseInt(val) > 0 && val.length <= 4)) {
+                      updateField("endYear", val);
+                    }
+                  }}
+                  placeholder="YYYY"
+                  variant="outlined"
+                  size="small"
+                  error={!!errors.endDate}
+                  inputProps={{
+                    maxLength: 4,
+                    style: { textAlign: "center" },
+                  }}
+                />
+              </div>
+              {errors.endDate && (
+                <Typography className={classes.errorText}>
+                  {errors.endDate}
+                </Typography>
+              )}
+            </div>
           </Grid>
         </Grid>
       </DialogContent>
