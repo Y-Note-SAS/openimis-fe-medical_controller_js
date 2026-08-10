@@ -3,6 +3,7 @@ import { combine, Searcher, useTranslations, withModulesManager } from "@openimi
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import MissionsFilter from "./MissionsFilter";
 import { MODULE_NAME } from "../constants";
+import { formatMonthYear } from "../helpers/utils";
 
 const styles = () => ({});
 
@@ -29,8 +30,8 @@ const MissionsSearcher = (props) => {
       (mission) => mission.region?.name,
       (mission) => mission.district?.name,
       (mission) => formatMedicalController(mission.medicalController),
-      (mission) => formatDateFromISO(mission.startDate),
-      (mission) => formatDateFromISO(mission.endDate),
+      (mission) => formatMonthYear(mission.startDate),
+      (mission) => formatMonthYear(mission.endDate),
       (mission) => formatMessage(`missions.status.${mission.status}`),
     ],
     []

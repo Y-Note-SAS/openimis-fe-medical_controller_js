@@ -8,10 +8,14 @@ import {
   useDebounceCb,
   useTranslations,
   withModulesManager,
+  MonthPicker,
+  MonthYearPicker,
+  YearPicker
 } from "@openimis/fe-core";
 import { Grid, TextField } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import { MISSION_STATUSES, MODULE_NAME } from "../constants";
+import { getFirstDayOfMonth } from "../helpers/utils";
 
 const styles = (theme) => ({
   form: {
@@ -36,37 +40,7 @@ const styles = (theme) => ({
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1),
-  },
-  monthField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
-  },
-  yearField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
-  },
+  }
 });
 
 const MissionsFilter = (props) => {
@@ -113,106 +87,54 @@ const MissionsFilter = (props) => {
 
   const onCodeChange = useDebounceCb((value) => onChangeFilters([codeFilter(value)]), debounceTime);
 
-  // Gestion des dates
-  const getStartDateValue = () => {
-    const month = filterValue("startMonth");
-    const year = filterValue("startYear");
-    if (month && year) {
-      return `${String(month).padStart(2, "0")}/${year}`;
-    }
-    return "";
-  };
+  const createMonthChangeHandler = (prefix, e) => {
+    const year = parseInt(filterValue(`${prefix}Year`), 10);
 
-  const getEndDateValue = () => {
-    const month = filterValue("endMonth");
-    const year = filterValue("endYear");
-    if (month && year) {
-      return `${String(month).padStart(2, "0")}/${year}`;
-    }
-    return "";
-  };
-
-  const handleStartMonthChange = (e) => {
-    const value = e.target.value;
-    const month = parseInt(value, 10);
-    const year = parseInt(filterValue("startYear"), 10);
-    
     // Mettre à jour le mois
     const monthFilter = {
-      id: "startMonth",
-      value: value,
+      id: `${prefix}Month`,
+      value: e,
       filter: null,
     };
 
     // Si mois et année sont valides, construire la date
-    if (month && year && month >= 1 && month <= 12) {
-      const date = new Date(year, month - 1, 1);
-      const dateStr = date.toISOString().split("T")[0];
-      onChangeFilters([monthFilter, startDateFilter(dateStr)]);
+    if (!!year) {
+      const dateStr = getFirstDayOfMonth(year, e);
+      const filter = prefix == "start" ? startDateFilter(dateStr) : endDateFilter(dateStr);
+      onChangeFilters([monthFilter, filter]);
     } else {
-      onChangeFilters([monthFilter, startDateFilter(null)]);
+      const filter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
+      onChangeFilters([monthFilter, filter]);
     }
   };
 
-  const handleStartYearChange = (e) => {
-    const value = e.target.value;
-    const year = parseInt(value, 10);
-    const month = parseInt(filterValue("startMonth"), 10);
-    
+  const createYearChangeHandler = (prefix, e) => {
+    console.log(`${prefix}: ${e}`);
+    const month = parseInt(filterValue(`${prefix}Month`), 10);
+
     const yearFilter = {
-      id: "startYear",
-      value: value,
+      id: `${prefix}Year`,
+      value: e,
       filter: null,
     };
 
-    if (month && year && month >= 1 && month <= 12 && year > 0) {
-      const date = new Date(year, month - 1, 1);
-      const dateStr = date.toISOString().split("T")[0];
-      onChangeFilters([yearFilter, startDateFilter(dateStr)]);
+    if (!!month) {
+      const dateStr = getFirstDayOfMonth(e, month);
+      const filter = prefix == "start" ? startDateFilter(dateStr) : endDateFilter(dateStr);
+      onChangeFilters([yearFilter, filter]);
     } else {
-      onChangeFilters([yearFilter, startDateFilter(null)]);
+      const filter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
+      onChangeFilters([yearFilter, filter]);
     }
   };
 
-  const handleEndMonthChange = (e) => {
-    const value = e.target.value;
-    const month = parseInt(value, 10);
-    const year = parseInt(filterValue("endYear"), 10);
-    
-    const monthFilter = {
-      id: "endMonth",
-      value: value,
-      filter: null,
-    };
-
-    if (month && year && month >= 1 && month <= 12) {
-      const date = new Date(year, month, 0);
-      const dateStr = date.toISOString().split("T")[0];
-      onChangeFilters([monthFilter, endDateFilter(dateStr)]);
-    } else {
-      onChangeFilters([monthFilter, endDateFilter(null)]);
-    }
-  };
-
-  const handleEndYearChange = (e) => {
-    const value = e.target.value;
-    const year = parseInt(value, 10);
-    const month = parseInt(filterValue("endMonth"), 10);
-    
-    const yearFilter = {
-      id: "endYear",
-      value: value,
-      filter: null,
-    };
-
-    if (month && year && month >= 1 && month <= 12 && year > 0) {
-      const date = new Date(year, month, 0);
-      const dateStr = date.toISOString().split("T")[0];
-      onChangeFilters([yearFilter, endDateFilter(dateStr)]);
-    } else {
-      onChangeFilters([yearFilter, endDateFilter(null)]);
-    }
-  };
+  const currentYear = new Date().getFullYear();
+  const handleStartYearChange = (e) => createYearChangeHandler("start", e)
+  const handleEndYearChange = (e) => createYearChangeHandler("end", e);
+  const handleStartMonthChange = (e) => createMonthChangeHandler("start", e);
+  const handleEndMonthChange = (e) => createMonthChangeHandler("end", e);
+  const startMonth = parseInt(filterValue("startMonth"), 10);
+  const endMonth = parseInt(filterValue("endMonth"), 10);
 
   return (
     <Grid container className={classes.form}>
@@ -293,83 +215,63 @@ const MissionsFilter = (props) => {
           </Grid>
         }
       />
-      
-      {/* Start Date - MM YYYY */}
+
       <ControlledField
         module={MODULE_NAME}
         id="MissionsFilter.startDate"
         field={
-          <Grid item xs={12} sm={4} md={2} className={classes.item}>
+          <Grid item xs={12} md={2} className={classes.item}>
             <div className={classes.dateGroup}>
               <div className={classes.dateLabel}>
                 {formatMessage("medical_controller.missions.startDate")}
               </div>
               <div className={classes.datePickersRow}>
-                <TextField
-                  className={classes.monthField}
+                <MonthPicker
                   value={filterValue("startMonth") || ""}
                   onChange={handleStartMonthChange}
-                  placeholder="MM"
-                  variant="outlined"
-                  size="small"
-                  inputProps={{
-                    maxLength: 2,
-                    style: { textAlign: "center" },
-                  }}
+                  withNull={true}
+                  withLabel={false}
                 />
-                <TextField
-                  className={classes.yearField}
-                  value={filterValue("startYear") || ""}
-                  onChange={handleStartYearChange}
-                  placeholder="YYYY"
-                  variant="outlined"
-                  size="small"
-                  inputProps={{
-                    maxLength: 4,
-                    style: { textAlign: "center" },
-                  }}
-                />
+                <Grid item xs={8}>
+                  <YearPicker
+                    value={filterValue("startYear") || ""}
+                    onChange={handleStartYearChange}
+                    min={2020}
+                    max={currentYear + 1}
+                    withLabel={false}
+                  />
+                </Grid>
               </div>
             </div>
           </Grid>
         }
       />
 
-      {/* End Date - MM YYYY */}
       <ControlledField
         module={MODULE_NAME}
         id="MissionsFilter.endDate"
         field={
-          <Grid item xs={12} sm={4} md={2} className={classes.item}>
+          <Grid item xs={12} md={2} className={classes.item}>
             <div className={classes.dateGroup}>
               <div className={classes.dateLabel}>
                 {formatMessage("medical_controller.missions.endDate")}
               </div>
               <div className={classes.datePickersRow}>
-                <TextField
-                  className={classes.monthField}
+                <MonthPicker
                   value={filterValue("endMonth") || ""}
                   onChange={handleEndMonthChange}
-                  placeholder="MM"
-                  variant="outlined"
-                  size="small"
-                  inputProps={{
-                    maxLength: 2,
-                    style: { textAlign: "center" },
-                  }}
+                  withNull={true}
+                  withLabel={false}
                 />
-                <TextField
-                  className={classes.yearField}
-                  value={filterValue("endYear") || ""}
-                  onChange={handleEndYearChange}
-                  placeholder="YYYY"
-                  variant="outlined"
-                  size="small"
-                  inputProps={{
-                    maxLength: 4,
-                    style: { textAlign: "center" },
-                  }}
-                />
+                <Grid item xs={8}>
+                  <YearPicker
+                    value={filterValue("endYear") || ""}
+                    onChange={handleEndYearChange}
+                    min={endMonth < startMonth ? filterValue("startYear") + 1 : filterValue("startYear") || 2020}
+                    max={currentYear + 2}
+                    withLabel={false}
+                  />
+                </Grid>
               </div>
             </div>
           </Grid>
