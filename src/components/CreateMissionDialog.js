@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
+import { bindActionCreators } from "redux";
 import { injectIntl } from "react-intl";
 import {
   Button,
@@ -11,6 +12,7 @@ import {
   Grid,
   Typography,
   TextField,
+  FormLabel
 } from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
 import {
@@ -19,9 +21,12 @@ import {
   PublishedComponent,
   TextInput,
   withModulesManager,
+  MonthPicker,
+  YearPicker
 } from "@openimis/fe-core";
 import { createMedicalControllerMission } from "../actions";
 import { MODULE_NAME } from "../constants";
+import { getFirstDayOfMonth } from "../helpers/utils";
 
 const styles = (theme) => ({
   dialogTitle: {
@@ -66,10 +71,10 @@ const styles = (theme) => ({
     width: "100%",
   },
   dateLabel: {
-    fontSize: "0.75rem",
+    fontSize: "0.80rem",
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(0.5),
-    fontWeight: 500,
+    fontWeight: 300,
   },
   datePickersRow: {
     display: "flex",
@@ -124,7 +129,7 @@ const generateMockCode = () => {
 };
 
 const CreateMissionDialog = (props) => {
-  const { classes, intl, modulesManager, open, onClose, onCreated } = props;
+  const { classes, intl, modulesManager, open, onClose, onCreated, healthFacilities } = props;
   const dispatch = useDispatch();
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
@@ -157,8 +162,10 @@ const CreateMissionDialog = (props) => {
   };
 
   const handleDistrictChange = (value) => {
+    console.log(healthFacilities)
     setForm((prev) => ({
       ...prev,
+      region: value?.parent ?? form.region,
       district: value,
       healthFacilities: [],
     }));
@@ -180,7 +187,7 @@ const CreateMissionDialog = (props) => {
     if (!form.endMonth || !form.endYear) {
       newErrors.endDate = fmt("createMission.error.endDateRequired");
     }
-    
+
     if (form.startMonth && form.startYear && form.endMonth && form.endYear) {
       const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1);
       const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1);
@@ -206,7 +213,7 @@ const CreateMissionDialog = (props) => {
       regionId: form.region?.uuid,
       districtId: form.district?.uuid ?? null,
       healthFacilityIds: form.healthFacilities.map((hf) => hf.uuid),
-      startDate: startDate.toISOString().split("T")[0],
+      startDate: getFirstDayOfMonth(form.startMonth, form.startYear),
       endDate: endDate.toISOString().split("T")[0],
     };
 
@@ -219,6 +226,8 @@ const CreateMissionDialog = (props) => {
     setErrors({});
     onClose();
   };
+
+  const currentYear = new Date().getFullYear();
 
   const handleMonthChange = (field, value) => {
     if (value === "" || /^[0-9]{1,2}$/.test(value)) {
@@ -259,10 +268,10 @@ const CreateMissionDialog = (props) => {
 
           <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
-              pubRef="location.RegionPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={0}
               value={form.region}
               withNull
-              allRegions
               required
               onChange={handleRegionChange}
             />
@@ -275,11 +284,14 @@ const CreateMissionDialog = (props) => {
 
           <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
-              pubRef="location.DistrictPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={1}
               value={form.district}
               region={form.region}
               withNull
               onChange={handleDistrictChange}
+              required
+              parentLocation={form.region}
             />
           </Grid>
 
@@ -292,6 +304,8 @@ const CreateMissionDialog = (props) => {
               multiple
               required
               onChange={(value) => updateField("healthFacilities", value ?? [])}
+              onDataChange={(facilities) => updateField("healthFacilities", facilities)}
+              autoComplete
             />
             {errors.healthFacilities && (
               <Typography className={classes.errorText}>
@@ -302,36 +316,27 @@ const CreateMissionDialog = (props) => {
 
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
-              <div className={classes.dateLabel}>
+              <FormLabel required className={classes.dateLabel}>
                 {fmt("createMission.startDate")}
-              </div>
+              </FormLabel>
               <div className={classes.datePickersRow}>
-                <TextField
-                  className={classes.monthField}
-                  value={form.startMonth}
-                  onChange={(e) => handleMonthChange("startMonth", e.target.value)}
-                  placeholder="MM"
-                  variant="outlined"
-                  size="small"
-                  error={!!errors.startDate}
-                  inputProps={{
-                    maxLength: 2,
-                    style: { textAlign: "center" },
-                  }}
-                />
-                <TextField
-                  className={classes.yearField}
-                  value={form.startYear}
-                  onChange={(e) => handleYearChange("startYear", e.target.value)}
-                  placeholder="YYYY"
-                  variant="outlined"
-                  size="small"
-                  error={!!errors.startDate}
-                  inputProps={{
-                    maxLength: 4,
-                    style: { textAlign: "center" },
-                  }}
-                />
+                <Grid item xs={3}>
+                  <MonthPicker
+                    value={form.startMonth}
+                    onChange={(e) => handleMonthChange("startMonth", e)}
+                    withNull={true}
+                    withLabel={false}
+                  />
+                </Grid>
+                <Grid item xs={2}>
+                  <YearPicker
+                    value={form.startYear}
+                    onChange={(e) => handleYearChange("startYear", e)}
+                    min={2020}
+                    max={currentYear + 1}
+                    withLabel={false}
+                  />
+                </Grid>
               </div>
               {errors.startDate && (
                 <Typography className={classes.errorText}>
@@ -343,36 +348,27 @@ const CreateMissionDialog = (props) => {
 
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
-              <div className={classes.dateLabel}>
+              <FormLabel required className={classes.dateLabel}>
                 {fmt("createMission.endDate")}
-              </div>
+              </FormLabel>
               <div className={classes.datePickersRow}>
-                <TextField
-                  className={classes.monthField}
-                  value={form.endMonth}
-                  onChange={(e) => handleMonthChange("endMonth", e.target.value)}
-                  placeholder="MM"
-                  variant="outlined"
-                  size="small"
-                  error={!!errors.endDate}
-                  inputProps={{
-                    maxLength: 2,
-                    style: { textAlign: "center" },
-                  }}
-                />
-                <TextField
-                  className={classes.yearField}
-                  value={form.endYear}
-                  onChange={(e) => handleYearChange("endYear", e.target.value)}
-                  placeholder="YYYY"
-                  variant="outlined"
-                  size="small"
-                  error={!!errors.endDate}
-                  inputProps={{
-                    maxLength: 4,
-                    style: { textAlign: "center" },
-                  }}
-                />
+                <Grid item xs={3}>
+                  <MonthPicker
+                    value={form.endMonth}
+                    onChange={(e) => handleMonthChange("endMonth", e)}
+                    withNull={true}
+                    withLabel={false}
+                  />
+                </Grid>
+                <Grid item xs={2}>
+                  <YearPicker
+                    value={form.endYear}
+                    onChange={(e) => handleYearChange("endYear", e)}
+                    min={form.endMonth < form.startMonth ? form.startYear + 1 : form.startYear || 2020}
+                    max={currentYear + 2}
+                    withLabel={false}
+                  />
+                </Grid>
               </div>
               {errors.endDate && (
                 <Typography className={classes.errorText}>
@@ -403,6 +399,10 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const enhance = combine(withModulesManager, withStyles(styles));
+const mapStateToProps = (state) => ({
+  healthFacilities: state.loc?.healthFacilities,
+});
+
+const enhance = combine(withModulesManager, withStyles(styles), connect(mapStateToProps));
 
 export default injectIntl(enhance(CreateMissionDialog));
