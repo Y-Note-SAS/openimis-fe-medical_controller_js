@@ -91,11 +91,11 @@ export function createMedicalControllerMission(_, payload, onSuccess) {
       const newMission = {
         uuid: payload.code,
         code: payload.code,
-        region: { uuid: payload.regionId, name: "—" },
-        district: payload.districtId ? { uuid: payload.districtId, name: "—" } : null,
-        healthFacilities: (payload.healthFacilityIds ?? []).map((id) => ({ uuid: id })),
-        startDate: payload.startDate ? `${payload.startDate}-01` : null,
-        endDate: payload.endDate ? `${payload.endDate}-01` : null,
+        region: payload.regionId,
+        district: payload.districtId,
+        healthFacilities: payload.healthFacilityIds,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
         status: MISSION_STATUS_OPEN,
       };
 
