@@ -15,3 +15,9 @@ export const getFirstDayOfMonth = (year, month) => {
     const mm = String(month).padStart(2, '0');
     return `${year}-${mm}-01`;
 };
+
+export const getLastDayOfMonth = (year, month) => {
+  const mm = String(month).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${mm}-${String(lastDay).padStart(2, '0')}`;
+};

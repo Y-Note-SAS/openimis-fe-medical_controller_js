@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
-import { bindActionCreators } from "redux";
+import { useDispatch, useSelector } from "react-redux";
 import { injectIntl } from "react-intl";
 import {
   Button,
@@ -26,7 +25,7 @@ import {
 } from "@openimis/fe-core";
 import { createMedicalControllerMission } from "../actions";
 import { MODULE_NAME } from "../constants";
-import { getFirstDayOfMonth } from "../helpers/utils";
+import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 
 const styles = (theme) => ({
   dialogTitle: {
@@ -129,7 +128,7 @@ const generateMockCode = () => {
 };
 
 const CreateMissionDialog = (props) => {
-  const { classes, intl, modulesManager, open, onClose, onCreated, healthFacilities } = props;
+  const { classes, intl, modulesManager, open, onClose, onCreated } = props;
   const dispatch = useDispatch();
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
@@ -162,7 +161,6 @@ const CreateMissionDialog = (props) => {
   };
 
   const handleDistrictChange = (value) => {
-    console.log(healthFacilities)
     setForm((prev) => ({
       ...prev,
       region: value?.parent ?? form.region,
@@ -172,49 +170,23 @@ const CreateMissionDialog = (props) => {
     setErrors((prev) => ({ ...prev, healthFacilities: null }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    if (!form.region) {
-      newErrors.region = fmt("createMission.error.regionRequired");
-    }
-    if (!form.healthFacilities || form.healthFacilities.length === 0) {
-      newErrors.healthFacilities = fmt("createMission.error.healthFacilitiesRequired");
-    }
-    if (!form.startMonth || !form.startYear) {
-      newErrors.startDate = fmt("createMission.error.startDateRequired");
-    }
-    if (!form.endMonth || !form.endYear) {
-      newErrors.endDate = fmt("createMission.error.endDateRequired");
-    }
-
-    if (form.startMonth && form.startYear && form.endMonth && form.endYear) {
-      const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1);
-      const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1);
-      if (endDate < startDate) {
-        newErrors.endDate = fmt("createMission.error.endBeforeStart");
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const cansave = () => {
+    const startDate = getFirstDayOfMonth(form.startYear,form.startMonth);
+    const endDate = getLastDayOfMonth(form.endYear, form.endMonth);
+    return !!form.region && !!form.district && !!form.healthFacilities
+      && form.healthFacilities.length > 0 && !!form.startMonth && !!form.endMonth && !!form.startYear
+       && !!form.endYear && (endDate > startDate);
   };
 
   const handleSubmit = () => {
-    if (!validate()) return;
-
-    const startDate = new Date(parseInt(form.startYear), parseInt(form.startMonth) - 1, 1);
-    const endDate = new Date(parseInt(form.endYear), parseInt(form.endMonth) - 1, 1);
-    const lastDayOfMonth = new Date(parseInt(form.endYear), parseInt(form.endMonth), 0);
-    endDate.setDate(lastDayOfMonth.getDate());
-
+    if (!cansave()) return;
     const payload = {
       code: mockCode,
-      regionId: form.region?.uuid,
-      districtId: form.district?.uuid ?? null,
+      regionId: form.region.id,
+      districtId: form.district.id,
       healthFacilityIds: form.healthFacilities.map((hf) => hf.uuid),
-      startDate: getFirstDayOfMonth(form.startMonth, form.startYear),
-      endDate: endDate.toISOString().split("T")[0],
+      startDate: getFirstDayOfMonth(form.startYear, form.startMonth),
+      endDate: getLastDayOfMonth(form.endYear, form.endMonth),
     };
 
     dispatch(createMedicalControllerMission(modulesManager, payload, onCreated));
@@ -390,7 +362,7 @@ const CreateMissionDialog = (props) => {
           onClick={handleSubmit}
           color="primary"
           variant="contained"
-          disabled={isSubmitting}
+          disabled={!cansave() || isSubmitting}
         >
           {fmt("createMission.submit")}
         </Button>
@@ -399,10 +371,6 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  healthFacilities: state.loc?.healthFacilities,
-});
-
-const enhance = combine(withModulesManager, withStyles(styles), connect(mapStateToProps));
+const enhance = combine(withModulesManager, withStyles(styles));
 
 export default injectIntl(enhance(CreateMissionDialog));
