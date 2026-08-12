@@ -1,34 +1,23 @@
 import { formatMutation, formatPageQueryWithCount, graphql } from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
-export function fetchMissions(_, filters = []) {
+export function fetchMissions(filters) {
   const query = formatPageQueryWithCount(
-    "medicalControllerMissions",
+    "missions",
     filters,
     [
-      "uuid",
-      "code",
-      "region { name }",
-      "district { name }",
-      "medicalController { uuid code lastName otherNames }",
+      "id",
+      "missionCode",
+      "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "user { id, lastName, otherNames }",
       "startDate",
       "endDate",
       "status",
     ],
   );
 
-  return (dispatch) =>
-    dispatch(
-      graphql(
-        query,
-        [
-          "MEDICAL_CONTROLLER_MISSIONS_REQ",
-          "MEDICAL_CONTROLLER_MISSIONS_RESP",
-          "MEDICAL_CONTROLLER_MISSIONS_ERR",
-        ],
-        { filters },
-      ),
-    );
+  return graphql(query, "MEDICAL_CONTROLLER_MISSIONS");
 }
 
 export function createMission(mission, onSuccess) {

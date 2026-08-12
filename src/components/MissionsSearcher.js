@@ -4,6 +4,7 @@ import { withStyles, withTheme } from "@material-ui/core/styles";
 import MissionsFilter from "./MissionsFilter";
 import { MODULE_NAME } from "../constants";
 import { formatMonthYear } from "../helpers/utils";
+import { connect } from "react-redux";
 
 const styles = () => ({});
 
@@ -13,6 +14,7 @@ const formatMedicalController = (controller) =>
 const MissionsSearcher = (props) => {
   const { error, fetched, fetching, items, modulesManager, onFiltersChange, pageInfo } = props;
   const { formatDateFromISO, formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+  console.log("pageInfo", pageInfo);
 
   const headers = () => [
     "medical_controller.missions.code",
@@ -77,6 +79,14 @@ const MissionsSearcher = (props) => {
   );
 };
 
-const enhance = combine(withTheme, withModulesManager, withStyles(styles));
+const mapStateToProps = (state) => ({
+  items: state.medical_controller.missions.items,
+  pageInfo: state.medical_controller.missions.pageInfo,
+  fetching: state.medical_controller.missions.isFetching,
+  fetched: state.medical_controller.missions.isFetched,
+  error: state.medical_controller.missions.error,
+});
+
+const enhance = combine(withTheme, withModulesManager, withStyles(styles), connect(mapStateToProps));
 
 export default enhance(MissionsSearcher);
