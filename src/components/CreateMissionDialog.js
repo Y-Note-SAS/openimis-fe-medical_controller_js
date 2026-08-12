@@ -23,7 +23,7 @@ import {
   MonthPicker,
   YearPicker
 } from "@openimis/fe-core";
-import { createMedicalControllerMission } from "../actions";
+import { createMission } from "../actions";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -166,7 +166,7 @@ const CreateMissionDialog = (props) => {
        && !!mission.endYear && (endDate > startDate);
   };
 
-  const save = () => props.createMedicalControllerMission(mission, onCreated) && handleClose();
+  const save = () => props.createMission(mission, onCreated) && handleClose();
 
   const handleClose = () => {
     setMission(EMPTY_STATE);
@@ -215,11 +215,6 @@ const CreateMissionDialog = (props) => {
               required
               onChange={handleRegionChange}
             />
-            {errors.region && (
-              <Typography className={classes.errorText}>
-                {errors.region}
-              </Typography>
-            )}
           </Grid>
 
           <Grid item xs={12} className={classes.fieldItem}>
@@ -339,7 +334,7 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({ createMedicalControllerMission }, dispatch);
+const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission }, dispatch);
 
 const enhance = combine(withModulesManager, withStyles(styles), connect(null, mapDispatchToProps));
 

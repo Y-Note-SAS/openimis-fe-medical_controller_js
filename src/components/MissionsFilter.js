@@ -57,12 +57,12 @@ const MissionsFilter = (props) => {
   const regionFilter = (value) => ({
     id: "region",
     value,
-    filter: value ? `location_Uuid: "${value.uuid}"` : null,
+    filter: value ? `regionId: "${value.id}"` : null,
   });
   const districtFilter = (value) => ({
     id: "district",
     value,
-    filter: value ? `location_Uuid: "${value.uuid}"` : null,
+    filter: value ? `districtId: "${value.id}"` : null,
   });
   const controllerFilter = (value) => ({
     id: "medicalController",
@@ -159,7 +159,8 @@ const MissionsFilter = (props) => {
         field={
           <Grid item xs={12} sm={6} md={3} className={classes.item}>
             <PublishedComponent
-              pubRef="location.RegionPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={0}
               value={filterValue("region")}
               withNull
               label={formatMessage("medical_controller.missions.region")}
@@ -174,12 +175,14 @@ const MissionsFilter = (props) => {
         field={
           <Grid item xs={12} sm={6} md={3} className={classes.item}>
             <PublishedComponent
-              pubRef="location.DistrictPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={1}
               value={filterValue("district")}
               region={filterValue("region")}
               withNull
-              label={formatMessage("medical_controller.missions.district")}
               onChange={(value) => onChangeFilters([districtFilter(value)])}
+              label={formatMessage("medical_controller.missions.district")}
+              parentLocation={filterValue("region")}
             />
           </Grid>
         }
