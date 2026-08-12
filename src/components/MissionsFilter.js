@@ -14,7 +14,7 @@ import {
 } from "@openimis/fe-core";
 import { Grid, TextField } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { MISSION_STATUSES, MODULE_NAME } from "../constants";
+import { MISSION_STATUS, MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth } from "../helpers/utils";
 
 const styles = (theme) => ({
@@ -207,7 +207,7 @@ const MissionsFilter = (props) => {
             <ConstantBasedPicker
               module={MODULE_NAME}
               label="missions.status"
-              constants={MISSION_STATUSES}
+              constants={MISSION_STATUS}
               withNull
               value={filterValue("status")}
               onChange={(value) => onChangeFilters([statusFilter(value)])}

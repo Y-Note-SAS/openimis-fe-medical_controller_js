@@ -4,8 +4,8 @@ const MOCK_MISSIONS = [
   {
     uuid: "0098766",
     code: "0098766",
-    region: { name: "Littoral" },
-    district: { name: "Deido" },
+    region: {code: 3, name: "Littoral" },
+    district: {code: "03DEI", name: "Deido" },
     medicalController: {
       uuid: "medical-controller-1",
       code: "CM001",

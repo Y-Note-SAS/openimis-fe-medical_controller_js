@@ -11,9 +11,8 @@ const formatMedicalController = (controller) =>
   controller ? `${controller.otherNames} ${controller.lastName}` : "";
 
 const MissionsSearcher = (props) => {
-  const { error, fetched, fetching, items, modulesManager, onFiltersChange, pageInfo } = props;
+  const { error, fetched, fetching, items, modulesManager, onFiltersChange, onDoubleClick, pageInfo } = props;
   const { formatDateFromISO, formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  console.log(items)
 
   const headers = () => [
     "medical_controller.missions.code",
@@ -74,6 +73,7 @@ const MissionsSearcher = (props) => {
       itemFormatters={itemFormatters}
       rowIdentifier={(mission) => mission.uuid}
       filtersToQueryParams={filtersToQueryParams}
+      onDoubleClick={onDoubleClick}
     />
   );
 };
