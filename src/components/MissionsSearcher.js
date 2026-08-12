@@ -28,10 +28,10 @@ const MissionsSearcher = (props) => {
 
   const itemFormatters = useCallback(
     () => [
-      (mission) => mission.code,
+      (mission) => mission.missionCode,
       (mission) => mission.region?.name,
       (mission) => mission.district?.name,
-      (mission) => formatMedicalController(mission.medicalController),
+      (mission) => formatMedicalController(mission.user),
       (mission) => formatMonthYear(mission.startDate),
       (mission) => formatMonthYear(mission.endDate),
       (mission) => formatMessage(`missions.status.${mission.status}`),

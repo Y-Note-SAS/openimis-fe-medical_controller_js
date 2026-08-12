@@ -166,7 +166,23 @@ const CreateMissionDialog = (props) => {
        && !!mission.endYear && (endDate > startDate);
   };
 
-  const save = () => props.createMission(mission, onCreated) && handleClose();
+  const save = async () => {
+    try {
+      const response = await props.createMission(
+        mission,
+        formatMessage(intl, MODULE_NAME, "createMission"),
+      );
+
+      // If the action returned an error, don't close dialog
+      if (!response || response.error) return;
+
+      if (props.onCreated) props.onCreated();
+      handleClose();
+    } catch (err) {
+      // swallow or log error; coreAlert is handled by the action
+      console.error(err);
+    }
+  };
 
   const handleClose = () => {
     setMission(EMPTY_STATE);

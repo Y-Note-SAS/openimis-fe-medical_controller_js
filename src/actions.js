@@ -1,4 +1,4 @@
-import { formatMutation, formatPageQueryWithCount, graphql } from "@openimis/fe-core";
+import { formatMutation, formatPageQueryWithCount, graphql, decodeId, fetchMutation } from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
 export function fetchMissions(filters) {
@@ -20,35 +20,20 @@ export function fetchMissions(filters) {
   return graphql(query, "MEDICAL_CONTROLLER_MISSIONS");
 }
 
-export function createMission(mission, onSuccess) {
-  return (dispatch) => {
-    const payload = {
-      regionId: mission.region?.id,
-      districtId: mission.district?.id,
-      healthFacilityIds: (mission.healthFacilities ?? []).map((hf) => hf.uuid),
-      startDate: getFirstDayOfMonth(mission.startYear, mission.startMonth),
-      endDate: getLastDayOfMonth(mission.endYear, mission.endMonth),
-    };
-
-    const healthFacilityIds = payload.healthFacilityIds
-      .map((healthFacilityId) => `"${healthFacilityId}"`)
-      .join(", ");
-
-    const mutationInput = `
-      regionId: "${payload.regionId}"
-      districtId: "${payload.districtId}"
-      healthFacilityIds: [${healthFacilityIds}]
-      startDate: "${payload.startDate}"
-      endDate: "${payload.endDate}"
+export function createMission(mission, clientMutationLabel) {
+  const mutationInput = `
+      regionId: ${decodeId(mission.region.id)}
+      districtId: ${decodeId(mission.district.id)}
+      healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
+      startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
+      endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
     `;
 
-    const mutation = formatMutation(
-      "CreateMissionMutation",
-      mutationInput,
-      "CreateMissionMutation",
-    );
+  let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
+  var requestedDateTime = new Date();
 
-    return dispatch(
+  return async (dispatch) => {
+    const response = await dispatch(
       graphql(
         mutation.payload,
         [
@@ -58,15 +43,20 @@ export function createMission(mission, onSuccess) {
         ],
         {
           clientMutationId: mutation.clientMutationId,
-          clientMutationLabel: "CreateMission",
+          clientMutationLabel,
+          requestedDateTime,
         },
       ),
-    ).then((response) => {
-      if (!response?.error && typeof onSuccess === "function") {
-        onSuccess(response?.payload?.data?.createMission ?? payload);
-      }
-      return response;
-    });
+    );
+
+    // Trigger fetching the mutation log so the action is recorded/available
+    try {
+      dispatch(fetchMutation(mutation.clientMutationId));
+    } catch (err) {
+      console.error("fetchMutation error", err);
+    }
+
+    return response;
   };
 }
 
