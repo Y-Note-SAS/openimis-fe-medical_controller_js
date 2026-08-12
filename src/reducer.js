@@ -31,8 +31,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.missions,
           isFetching: false,
           isFetched: true,
-          items: parseData(action.payload.data.medicalControllerMissions),
-          pageInfo: pageInfo(action.payload.data.medicalControllerMissions),
+          items: parseData(action.payload.data.missions),
+          pageInfo: pageInfo(action.payload.data.missions),
           error: formatGraphQLError(action.payload),
         },
       };
