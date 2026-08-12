@@ -1,4 +1,6 @@
+import { formatMutation, graphql } from "@openimis/fe-core";
 import { MISSION_STATUS_CLOSED, MISSION_STATUS_OPEN } from "./constants";
+import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
 const MOCK_MISSIONS = [
   {
@@ -82,30 +84,53 @@ export function fetchMedicalControllerMissions(_, filters = []) {
   };
 }
 
-export function createMedicalControllerMission(_, payload, onSuccess) {
+export function createMedicalControllerMission(mission, onSuccess) {
   return (dispatch) => {
-    dispatch({ type: "MEDICAL_CONTROLLER_MISSION_CREATE_REQ" });
+    const payload = {
+      regionId: mission.region?.id,
+      districtId: mission.district?.id,
+      healthFacilityIds: (mission.healthFacilities ?? []).map((hf) => hf.uuid),
+      startDate: getFirstDayOfMonth(mission.startYear, mission.startMonth),
+      endDate: getLastDayOfMonth(mission.endYear, mission.endMonth),
+    };
 
-    // Mock: simule la création et ajoute dans la liste locale
-    setTimeout(() => {
-      const newMission = {
-        uuid: payload.code,
-        code: payload.code,
-        region: payload.regionId,
-        district: payload.districtId,
-        healthFacilities: payload.healthFacilityIds,
-        startDate: payload.startDate,
-        endDate: payload.endDate,
-        status: MISSION_STATUS_OPEN,
-      };
+    const healthFacilityIds = payload.healthFacilityIds
+      .map((healthFacilityId) => `"${healthFacilityId}"`)
+      .join(", ");
 
-      MOCK_MISSIONS.unshift(newMission);
+    const mutationInput = `
+      regionId: "${payload.regionId}"
+      districtId: "${payload.districtId}"
+      healthFacilityIds: [${healthFacilityIds}]
+      startDate: "${payload.startDate}"
+      endDate: "${payload.endDate}"
+    `;
 
-      dispatch({ type: "MEDICAL_CONTROLLER_MISSION_CREATE_RESP", payload: { mission: newMission } });
+    const mutation = formatMutation(
+      "CreateMissionMutation",
+      mutationInput,
+      "CreateMissionMutation",
+    );
 
-      if (typeof onSuccess === "function") {
-        onSuccess(newMission);
+    return dispatch(
+      graphql(
+        mutation.payload,
+        [
+          "MEDICAL_CONTROLLER_MISSION_CREATE_REQ",
+          "MEDICAL_CONTROLLER_MISSION_CREATE_RESP",
+          "MEDICAL_CONTROLLER_MISSION_CREATE_ERR",
+        ],
+        {
+          clientMutationId: mutation.clientMutationId,
+          clientMutationLabel: "CreateMission",
+        },
+      ),
+    ).then((response) => {
+      if (!response?.error && typeof onSuccess === "function") {
+        onSuccess(response?.payload?.data?.createMission ?? payload);
       }
-    }, 300);
+      return response;
+    });
   };
 }
+

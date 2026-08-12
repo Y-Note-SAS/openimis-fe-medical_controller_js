@@ -26,6 +26,8 @@ import {
 import { createMedicalControllerMission } from "../actions";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
+import { connect } from "react-redux";
+import { bindActionCreators } from "redux";
 
 const styles = (theme) => ({
   dialogTitle: {
@@ -43,17 +45,6 @@ const styles = (theme) => ({
   },
   fieldItem: {
     padding: theme.spacing(1),
-  },
-  codeLabel: {
-    color: theme.palette.primary.main,
-    fontSize: "0.75rem",
-    marginBottom: theme.spacing(0.5),
-  },
-  codeValue: {
-    color: theme.palette.text.secondary,
-    fontSize: "1rem",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    paddingBottom: theme.spacing(0.5),
   },
   errorText: {
     color: theme.palette.error.main,
@@ -122,11 +113,6 @@ const EMPTY_STATE = {
   endYear: "",
 };
 
-const generateMockCode = () => {
-  const num = Math.floor(Math.random() * 9000000 + 1000000);
-  return String(num);
-};
-
 const CreateMissionDialog = (props) => {
   const { classes, intl, modulesManager, open, onClose, onCreated } = props;
   const dispatch = useDispatch();
@@ -134,67 +120,56 @@ const CreateMissionDialog = (props) => {
     (state) => state.medical_controller?.isCreating ?? false
   );
 
-  const [form, setForm] = useState(EMPTY_STATE);
+  const [mission, setMission] = useState(EMPTY_STATE);
   const [errors, setErrors] = useState({});
-  const [mockCode] = useState(generateMockCode);
-
-  const fmt = useCallback(
-    (key) => formatMessage(intl, MODULE_NAME, key),
-    [intl]
-  );
 
   const updateField = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setMission((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
   const handleRegionChange = (value) => {
-    setForm((prev) => ({
+    setMission((prev) => ({
       ...prev,
       region: value,
       district: null,
       healthFacilities: [],
     }));
-    setErrors((prev) => ({ ...prev, region: null, district: null, healthFacilities: null }));
   };
 
   const handleDistrictChange = (value) => {
-    setForm((prev) => ({
+    setMission((prev) => ({
       ...prev,
-      region: value?.parent ?? form.region,
+      region: value?.parent ?? mission.region,
       district: value,
-      healthFacilities: [],
+      healthFacilities: mission.healthFacilities || [],
     }));
-    setErrors((prev) => ({ ...prev, healthFacilities: null }));
+  };
+
+  const onChangeHealthFacilities = (value) => {
+    console.log(value)
+    setMission((prev) => ({
+      ...prev,
+      region: value?.length > 0 ? value[0]?.location?.parent : mission.region,
+      district: value?.length > 0 ? value[0]?.location : mission.district,
+      healthFacilities: value ?? [],
+    }));
   };
 
   const cansave = () => {
-    const startDate = getFirstDayOfMonth(form.startYear,form.startMonth);
-    const endDate = getLastDayOfMonth(form.endYear, form.endMonth);
-    return !!form.region && !!form.district && !!form.healthFacilities
-      && form.healthFacilities.length > 0 && !!form.startMonth && !!form.endMonth && !!form.startYear
-       && !!form.endYear && (endDate > startDate);
+    const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
+    const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
+    return !!mission.region && !!mission.district && !!mission.healthFacilities
+      && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
+       && !!mission.endYear && (endDate > startDate);
   };
 
-  const handleSubmit = () => {
-    if (!cansave()) return;
-    const payload = {
-      code: mockCode,
-      regionId: form.region.id,
-      districtId: form.district.id,
-      healthFacilityIds: form.healthFacilities.map((hf) => hf.uuid),
-      startDate: getFirstDayOfMonth(form.startYear, form.startMonth),
-      endDate: getLastDayOfMonth(form.endYear, form.endMonth),
-    };
-
-    dispatch(createMedicalControllerMission(modulesManager, payload, onCreated));
-    handleClose();
-  };
+  const save = () => props.createMedicalControllerMission(mission, onCreated) && handleClose();
 
   const handleClose = () => {
-    setForm(EMPTY_STATE);
+    setMission(EMPTY_STATE);
     setErrors({});
     onClose();
   };
@@ -223,7 +198,7 @@ const CreateMissionDialog = (props) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle disableTypography className={classes.dialogTitle}>
         <Typography variant="h6" className={classes.titleText}>
-          {fmt("createMission.title")}
+          {formatMessage(intl, MODULE_NAME,"createMission.title")}
         </Typography>
       </DialogTitle>
 
@@ -232,17 +207,10 @@ const CreateMissionDialog = (props) => {
       <DialogContent className={classes.dialogContent}>
         <Grid container>
           <Grid item xs={12} className={classes.fieldItem}>
-            <Typography className={classes.codeLabel}>
-              {fmt("createMission.code")}
-            </Typography>
-            <Typography className={classes.codeValue}>{mockCode}</Typography>
-          </Grid>
-
-          <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={0}
-              value={form.region}
+              value={mission.region}
               withNull
               required
               onChange={handleRegionChange}
@@ -258,24 +226,24 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={1}
-              value={form.district}
-              region={form.region}
+              value={mission.district}
+              region={mission.region}
               withNull
               onChange={handleDistrictChange}
               required
-              parentLocation={form.region}
+              parentLocation={mission.region}
             />
           </Grid>
 
           <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
               pubRef="location.HealthFacilityPicker"
-              value={form.healthFacilities}
-              district={form.district}
-              region={form.region}
+              value={mission.healthFacilities}
+              district={mission.district}
+              region={mission.region}
               multiple
               required
-              onChange={(value) => updateField("healthFacilities", value ?? [])}
+              onChange={onChangeHealthFacilities}
               onDataChange={(facilities) => updateField("healthFacilities", facilities)}
               autoComplete
             />
@@ -289,21 +257,21 @@ const CreateMissionDialog = (props) => {
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <FormLabel required className={classes.dateLabel}>
-                {fmt("createMission.startDate")}
+                {formatMessage(intl, MODULE_NAME, "createMission.startDate")}
               </FormLabel>
               <div className={classes.datePickersRow}>
                 <Grid item xs={3}>
                   <MonthPicker
-                    value={form.startMonth}
-                    onChange={(e) => handleMonthChange("startMonth", e)}
+                    value={mission.startMonth}
+                    onChange={(e) => updateField("startMonth", e)}
                     withNull={true}
                     withLabel={false}
                   />
                 </Grid>
                 <Grid item xs={2}>
                   <YearPicker
-                    value={form.startYear}
-                    onChange={(e) => handleYearChange("startYear", e)}
+                    value={mission.startYear}
+                    onChange={(e) => updateField("startYear", e)}
                     min={2020}
                     max={currentYear + 1}
                     withLabel={false}
@@ -321,22 +289,22 @@ const CreateMissionDialog = (props) => {
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <FormLabel required className={classes.dateLabel}>
-                {fmt("createMission.endDate")}
+                {formatMessage(intl, MODULE_NAME, "createMission.endDate")}
               </FormLabel>
               <div className={classes.datePickersRow}>
                 <Grid item xs={3}>
                   <MonthPicker
-                    value={form.endMonth}
-                    onChange={(e) => handleMonthChange("endMonth", e)}
+                    value={mission.endMonth}
+                    onChange={(e) => updateField("endMonth", e)}
                     withNull={true}
                     withLabel={false}
                   />
                 </Grid>
                 <Grid item xs={2}>
                   <YearPicker
-                    value={form.endYear}
-                    onChange={(e) => handleYearChange("endYear", e)}
-                    min={form.endMonth < form.startMonth ? form.startYear + 1 : form.startYear || 2020}
+                    value={mission.endYear}
+                    onChange={(e) => updateField("endYear", e)}
+                    min={mission.endMonth < mission.startMonth ? mission.startYear + 1 : mission.startYear || 2020}
                     max={currentYear + 2}
                     withLabel={false}
                   />
@@ -356,21 +324,23 @@ const CreateMissionDialog = (props) => {
 
       <DialogActions className={classes.actions}>
         <Button onClick={handleClose} color="primary" disabled={isSubmitting}>
-          {fmt("createMission.cancel")}
+          {formatMessage(intl, MODULE_NAME, "createMission.cancel")}
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={save}
           color="primary"
           variant="contained"
           disabled={!cansave() || isSubmitting}
         >
-          {fmt("createMission.submit")}
+          {formatMessage(intl, MODULE_NAME, "createMission.submit")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-const enhance = combine(withModulesManager, withStyles(styles));
+const mapDispatchToProps = (dispatch) => bindActionCreators({ createMedicalControllerMission }, dispatch);
+
+const enhance = combine(withModulesManager, withStyles(styles), connect(null, mapDispatchToProps));
 
 export default injectIntl(enhance(CreateMissionDialog));
