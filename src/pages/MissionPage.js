@@ -34,7 +34,7 @@ const MissionPage = (props) => {
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
     const { mission_uuid } = useParams();
     const history = useHistory();
-    const [isLocked, setLocked] = useState(true);
+    const [isLocked, setLocked] = useState(false);
     const [isLoaded, setLoaded] = useState(false);
 
     const rights = useSelector((state) => state.core?.user?.i_user?.rights ?? []);
@@ -46,7 +46,7 @@ const MissionPage = (props) => {
 
     return (
         <MissionForm
-            readOnly={!rights.includes(RIGHT_MEDICAL_CONTROLLER) || !!isLocked}
+            readOnly={!rights.includes(RIGHT_MEDICAL_CONTROLLER) || !!isLocked || !isLocked}
             mission={mission}
             onBack={() => historyPush(modulesManager, history, "medical_controller.missionsList")}
         />

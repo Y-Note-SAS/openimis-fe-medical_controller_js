@@ -55,11 +55,6 @@ const styles = (theme) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
     paddingBottom: theme.spacing(0.5),
   },
-  errorText: {
-    color: theme.palette.error.main,
-    fontSize: "0.75rem",
-    marginTop: theme.spacing(0.5),
-  },
   actions: {
     paddingRight: theme.spacing(2),
     paddingBottom: theme.spacing(1),
@@ -79,36 +74,6 @@ const styles = (theme) => ({
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1),
-  },
-  monthField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
-  },
-  yearField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
   },
 });
 
@@ -223,7 +188,7 @@ const CreateMissionDialog = (props) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle disableTypography className={classes.dialogTitle}>
         <Typography variant="h6" className={classes.titleText}>
-          {fmt("createMission.title")}
+          {formatMessage(intl, MODULE_NAME, "createMission.title")}
         </Typography>
       </DialogTitle>
 
@@ -233,7 +198,7 @@ const CreateMissionDialog = (props) => {
         <Grid container>
           <Grid item xs={12} className={classes.fieldItem}>
             <Typography className={classes.codeLabel}>
-              {fmt("createMission.code")}
+              {formatMessage(intl, MODULE_NAME, "createMission.code")}
             </Typography>
             <Typography className={classes.codeValue}>{mockCode}</Typography>
           </Grid>
@@ -289,7 +254,7 @@ const CreateMissionDialog = (props) => {
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <FormLabel required className={classes.dateLabel}>
-                {fmt("createMission.startDate")}
+                {formatMessage(intl, MODULE_NAME, "createMission.startDate")}
               </FormLabel>
               <div className={classes.datePickersRow}>
                 <Grid item xs={3}>
@@ -321,7 +286,7 @@ const CreateMissionDialog = (props) => {
           <Grid item xs={12} className={classes.fieldItem}>
             <div className={classes.dateGroup}>
               <FormLabel required className={classes.dateLabel}>
-                {fmt("createMission.endDate")}
+                {formatMessage(intl, MODULE_NAME, "createMission.endDate")}
               </FormLabel>
               <div className={classes.datePickersRow}>
                 <Grid item xs={3}>
@@ -356,7 +321,7 @@ const CreateMissionDialog = (props) => {
 
       <DialogActions className={classes.actions}>
         <Button onClick={handleClose} color="primary" disabled={isSubmitting}>
-          {fmt("createMission.cancel")}
+          {formatMessage(intl, MODULE_NAME, "createMission.cancel")}
         </Button>
         <Button
           onClick={handleSubmit}

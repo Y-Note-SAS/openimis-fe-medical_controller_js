@@ -2,10 +2,14 @@ import { MISSION_STATUS_CLOSED, MISSION_STATUS_OPEN } from "./constants";
 
 const MOCK_MISSIONS = [
   {
-    uuid: "0098766",
+    uuid: "a977e005-f6f9-4d3e-9cd2-f3deb48a3483",
     code: "0098766",
     region: {code: 3, name: "Littoral" },
     district: {code: "03DEI", name: "Deido" },
+    healthFacilities: [
+      {code: "03DEI001", name: "Deido Hospital"},
+      {code: "03DEI002", name: "Deido Health Center"},
+    ],
     medicalController: {
       uuid: "medical-controller-1",
       code: "CM001",

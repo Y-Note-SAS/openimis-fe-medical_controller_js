@@ -11,6 +11,16 @@ export const formatMonthYear = (dateString) => {
     return result.charAt(0).toUpperCase() + result.slice(1);
 };
 
+export const getMonth = (dateString) => {
+    const [, month] = dateString.split("-").map(Number);
+    return month;
+};
+
+export const getYear = (dateString) => {
+    const [year] = dateString.split("-").map(Number);
+    return year;
+};
+
 export const getFirstDayOfMonth = (year, month) => {
     const mm = String(month).padStart(2, '0');
     return `${year}-${mm}-01`;

@@ -1,7 +1,7 @@
 import React from "react";
 import { connect, useDispatch } from "react-redux";
 
-import { Grid } from "@material-ui/core";
+import { Grid, FormLabel } from "@material-ui/core";
 import { withTheme, withStyles } from "@material-ui/core/styles";
 
 import {
@@ -13,12 +13,21 @@ import {
   useTranslations,
   ValidatedTextInput,
   withModulesManager,
-  ConstantBasedPicker
+  ConstantBasedPicker,
+  MonthPicker,
+  YearPicker,
 } from "@openimis/fe-core";
 import { MISSION_STATUS, MODULE_NAME } from "../../constants";
+import { getMonth, getYear } from "../../helpers/utils";
 
 const styles = (theme) => ({
   item: theme.paper.item,
+  dateLabel: {
+    fontSize: "0.80rem",
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(0.5),
+    fontWeight: 300,
+  },
 });
 
 const MainPanel = (props) => {
@@ -28,15 +37,18 @@ const MainPanel = (props) => {
     edited,
     onEditedChanged,
     readOnly,
+    intl
   } = props;
 
   const dispatch = useDispatch();
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <Grid container direction="row">
-      <Grid item xs={3} className={classes.item}>
+      <Grid item xs={2} className={classes.item}>
         <TextInput
           module="medical_controller"
           label="missions.details.code"
@@ -46,16 +58,16 @@ const MainPanel = (props) => {
           autoFocus={autoFocus}
         />
       </Grid>
-      <Grid item xs={4} className={classes.item}>
+      <Grid item xs={2} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={0}
           value={edited.region}
-          readonly={readOnly}
+          readOnly={readOnly}
           label={formatMessage("medical_controller.missions.region")}
         />
       </Grid>
-      <Grid item xs={4} className={classes.item}>
+      <Grid item xs={3} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
@@ -66,7 +78,7 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.district")}
         />
       </Grid>
-      <Grid item xs={12} className={classes.item}>
+      <Grid item xs={5} className={classes.item}>
         <PublishedComponent
           pubRef="location.HealthFacilityPicker"
           value={edited.healthFacilities}
@@ -85,7 +97,53 @@ const MainPanel = (props) => {
           readOnly={readOnly}
         />
       </Grid>
-      <Grid item xs={4} className={classes.item}>
+      <Grid item className={classes.item}>
+        <FormLabel className={classes.dateLabel}>
+          {formatMessage("medical_controller.MissionFormMainPanel.startDate")}
+        </FormLabel>
+        <Grid container direction="row" spacing={1} wrap="nowrap">
+          <Grid item xs={4} className={classes.item}>
+            <MonthPicker
+              value={getMonth(edited.startDate)}
+              withLabel={false}
+              readOnly={readOnly}
+            />
+          </Grid>
+          <Grid item xs={3} className={classes.item}>
+            <YearPicker
+              value={getYear(edited.startDate)}
+              withLabel={false}
+              min={2022}
+              max={currentYear + 1}
+              readOnly={readOnly}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid item direction="column" className={classes.item}>
+        <FormLabel className={classes.dateLabel}>
+          {formatMessage("medical_controller.MissionFormMainPanel.endDate")}
+        </FormLabel>
+        <Grid container direction="row" spacing={1} wrap="nowrap">
+          <Grid item className={classes.item}>
+            <MonthPicker
+              value={getMonth(edited.endDate)}
+              withLabel={false}
+              readOnly={readOnly}
+            />
+          </Grid>
+          <Grid item className={classes.item}>
+            <YearPicker
+              value={getYear(edited.endDate)}
+              withLabel={false}
+              min={2022}
+              max={currentYear + 1}
+              readOnly={readOnly}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid item xs={2} className={classes.item}>
         <ConstantBasedPicker
           module={MODULE_NAME}
           label="missions.status"

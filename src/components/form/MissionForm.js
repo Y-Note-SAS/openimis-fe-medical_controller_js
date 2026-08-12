@@ -8,7 +8,6 @@ import MainPanel from "./MainPanel";
 
 const styles = (theme) => ({
   page: theme.page,
-  locked: theme.page.locked,
 });
 
 const MissionForm = (props) => {
