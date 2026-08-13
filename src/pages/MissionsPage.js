@@ -26,7 +26,7 @@ const MissionsPage = (props) => {
   if (!rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
   const handleMissionCreated = () => {
-    dispatch(fetchMissions(modulesManager, []));
+    dispatch(fetchMissions([]));
   };
 
   return (
@@ -39,7 +39,7 @@ const MissionsPage = (props) => {
         fetching={missions.isFetching ?? false}
         fetched={missions.isFetched ?? false}
         error={missions.error}
-        onFiltersChange={(filters) => dispatch(fetchMissions(modulesManager, filters))}
+        onFiltersChange={(filters) => dispatch(fetchMissions(filters))}
       />
       <div className={classes.fab}>
         <Fab color="primary" onClick={() => setCreateDialogOpen(true)}>
