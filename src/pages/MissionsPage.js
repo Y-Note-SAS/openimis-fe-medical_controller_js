@@ -6,7 +6,7 @@ import { withStyles, withTheme } from "@material-ui/core/styles";
 import { combine, Helmet, historyPush, useHistory, useTranslations, withModulesManager } from "@openimis/fe-core";
 import MissionsSearcher from "../components/MissionsSearcher";
 import CreateMissionDialog from "../components/CreateMissionDialog";
-import { fetchMedicalControllerMissions } from "../actions";
+import { fetchMissions } from "../actions";
 import { MODULE_NAME, RIGHT_MEDICAL_CONTROLLER } from "../constants";
 
 const styles = (theme) => ({
@@ -28,11 +28,11 @@ const MissionsPage = (props) => {
   const history = useHistory();
 
   const handleMissionCreated = () => {
-    dispatch(fetchMedicalControllerMissions(modulesManager, []));
+    dispatch(fetchMissions(modulesManager, []));
   };
 
   const onDoubleClick = (mission, newTab = false) => {
-    historyPush(modulesManager, history, "medical_controller.route.mission", [mission.uuid], newTab);
+    historyPush(modulesManager, history, "medical_controller.route.mission", [mission.id], newTab);
   };
 
   return (
@@ -45,7 +45,7 @@ const MissionsPage = (props) => {
         fetching={missions.isFetching ?? false}
         fetched={missions.isFetched ?? false}
         error={missions.error}
-        onFiltersChange={(filters) => dispatch(fetchMedicalControllerMissions(modulesManager, filters))}
+        onFiltersChange={(filters) => dispatch(fetchMissions(modulesManager, filters))}
         onDoubleClick={onDoubleClick}
       />
       <div className={classes.fab}>
