@@ -108,49 +108,53 @@ const MainPanel = (props) => {
           readOnly={readOnly}
         />
       </Grid>
-      <Grid item className={classes.item}>
-        <FormLabel className={classes.dateLabel}>
-          {formatMessage("medical_controller.MissionFormMainPanel.startDate")}
-        </FormLabel>
-        <Grid container direction="row" spacing={1} wrap="nowrap">
-          <Grid item xs={4} className={classes.item}>
-            <MonthPicker
-              value={getMonth(edited.startDate)}
-              withLabel={false}
-              readOnly={readOnly}
-            />
+      <Grid item xs={6} md={3} className={classes.item}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <FormLabel className={classes.dateLabel}>
+              {formatMessage("medical_controller.MissionFormMainPanel.startDate")}
+            </FormLabel>
+            <Grid container direction="row" spacing={1} wrap="nowrap">
+              <Grid item xs={8} className={classes.item}>
+                <MonthPicker
+                  value={getMonth(edited.startDate)}
+                  withLabel={false}
+                  readOnly={readOnly}
+                />
+              </Grid>
+              <Grid item xs={4} className={classes.item}>
+                <YearPicker
+                  value={getYear(edited.startDate)}
+                  withLabel={false}
+                  min={getYear(edited.startDate)}
+                  max={currentYear + 1}
+                  readOnly={readOnly}
+                />
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item xs={2} className={classes.item}>
-            <YearPicker
-              value={getYear(edited.startDate)}
-              withLabel={false}
-              min={getYear(edited.startDate)}
-              max={currentYear + 1}
-              readOnly={readOnly}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid item direction="column" className={classes.item}>
-        <FormLabel className={classes.dateLabel}>
-          {formatMessage("medical_controller.MissionFormMainPanel.endDate")}
-        </FormLabel>
-        <Grid container direction="row" spacing={1} wrap="nowrap">
-          <Grid item xs={4} className={classes.item}>
-            <MonthPicker
-              value={getMonth(edited.endDate)}
-              withLabel={false}
-              readOnly={readOnly}
-            />
-          </Grid>
-          <Grid item xs={2} className={classes.item}>
-            <YearPicker
-              value={getYear(edited.endDate)}
-              withLabel={false}
-              min={getYear(edited.endDate)}
-              max={currentYear + 1}
-              readOnly={readOnly}
-            />
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <FormLabel className={classes.dateLabel}>
+              {formatMessage("medical_controller.MissionFormMainPanel.endDate")}
+            </FormLabel>
+            <Grid container direction="row" spacing={1} wrap="nowrap">
+              <Grid item xs={8} className={classes.item}>
+                <MonthPicker
+                  value={getMonth(edited.endDate)}
+                  withLabel={false}
+                  readOnly={readOnly}
+                />
+              </Grid>
+              <Grid item xs={4} className={classes.item}>
+                <YearPicker
+                  value={getYear(edited.endDate)}
+                  withLabel={false}
+                  min={getYear(edited.endDate)}
+                  max={currentYear + 1}
+                  readOnly={readOnly}
+                />
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
