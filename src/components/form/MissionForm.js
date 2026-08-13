@@ -6,6 +6,7 @@ import { withStyles, withTheme } from "@material-ui/core/styles";
 
 import { Form, ProgressOrError, combine, ErrorBoundary } from "@openimis/fe-core";
 import MainPanel from "./MainPanel";
+import SamplePanel from "./SamplePanel";
 import { fetchMission } from "../../actions";
 
 const styles = (theme) => ({
@@ -42,7 +43,7 @@ const MissionForm = (props) => {
             edited={mission}
             edited_id={mission.id}
             HeadPanel={MainPanel}
-            Panels={[]}
+            Panels={[SamplePanel]}
             back={onBack}
           />)}
       </ErrorBoundary>

@@ -38,13 +38,11 @@ const MissionPage = (props) => {
     if (!rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
     return (
-        <div className={classes.page}>
-            <MissionForm
-                readOnly={!rights.includes(RIGHT_MEDICAL_CONTROLLER) || !!isLocked || !isLocked}
-                mission_code={mission_code}
-                onBack={() => historyPush(modulesManager, history, "medical_controller.missionsList")}
-            />
-        </div>
+        <MissionForm
+            readOnly={!rights.includes(RIGHT_MEDICAL_CONTROLLER) || !!isLocked || !isLocked}
+            mission_code={mission_code}
+            onBack={() => historyPush(modulesManager, history, "medical_controller.missionsList")}
+        />
 
     );
 };
