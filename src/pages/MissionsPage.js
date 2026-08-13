@@ -28,7 +28,7 @@ const MissionsPage = (props) => {
   const history = useHistory();
 
   const handleMissionCreated = () => {
-    dispatch(fetchMissions(modulesManager, []));
+    dispatch(fetchMissions([]));
   };
 
   const onDoubleClick = (mission, newTab = false) => {
@@ -45,7 +45,7 @@ const MissionsPage = (props) => {
         fetching={missions.isFetching ?? false}
         fetched={missions.isFetched ?? false}
         error={missions.error}
-        onFiltersChange={(filters) => dispatch(fetchMissions(modulesManager, filters))}
+        onFiltersChange={(filters) => dispatch(fetchMissions(filters))}
         onDoubleClick={onDoubleClick}
       />
       <div className={classes.fab}>
