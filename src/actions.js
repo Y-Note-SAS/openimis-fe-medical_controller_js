@@ -1,111 +1,62 @@
-import { MISSION_STATUS_CLOSED, MISSION_STATUS_OPEN } from "./constants";
+import { formatMutation, formatPageQueryWithCount, graphql, decodeId, fetchMutation } from "@openimis/fe-core";
+import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
-const MOCK_MISSIONS = [
-  {
-    uuid: "0098766",
-    code: "0098766",
-    region: { name: "Littoral" },
-    district: { name: "Deido" },
-    medicalController: {
-      uuid: "medical-controller-1",
-      code: "CM001",
-      lastName: "NTSOULOUNG",
-      otherNames: "NTSOUI Armel",
-    },
-    startDate: "2026-07-01",
-    endDate: "2026-07-31",
-    status: MISSION_STATUS_OPEN,
-  },
-  {
-    uuid: "9864556",
-    code: "9864556",
-    region: { name: "Extreme Nord" },
-    district: { name: "Fotokol" },
-    medicalController: {
-      uuid: "medical-controller-2",
-      code: "CM002",
-      lastName: "NDONNANG",
-      otherNames: "NDONL Romeo",
-    },
-    startDate: "2026-05-01",
-    endDate: "2026-07-31",
-    status: MISSION_STATUS_CLOSED,
-  },
-];
-
-const filterValue = (filters, name) => {
-  const filter = filters.find((item) => item.startsWith(`${name}:`) || item.startsWith(`${name}_Icontains:`));
-  const value = filter?.match(/"([^"]+)"/)?.[1];
-  return value ? String(value).toLowerCase() : null;
-};
-
-const applyMockFilters = (missions, filters) => {
-  const code = filterValue(filters, "code");
-  const controller = filterValue(filters, "medicalController_Uuid");
-  const status = filterValue(filters, "status");
-  const startDate = filterValue(filters, "startDate_Gte");
-  const endDate = filterValue(filters, "endDate_Lte");
-
-  return missions.filter(
-    (mission) =>
-      (!code || String(mission.code ?? "").toLowerCase().includes(code)) &&
-      (!controller || mission.medicalController.uuid === controller) &&
-      (!status || mission.status === status) &&
-      (!startDate || mission.startDate >= startDate) &&
-      (!endDate || mission.endDate <= endDate)
+export function fetchMissions(filters) {
+  const query = formatPageQueryWithCount(
+    "missions",
+    filters,
+    [
+      "id",
+      "missionCode",
+      "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "user { id, lastName, otherNames }",
+      "startDate",
+      "endDate",
+      "status",
+    ],
   );
-};
 
-export function fetchMedicalControllerMissions(_, filters = []) {
-  return (dispatch) => {
-    const missions = applyMockFilters(MOCK_MISSIONS, filters);
+  return graphql(query, "MEDICAL_CONTROLLER_MISSIONS");
+}
 
-    dispatch({ type: "MEDICAL_CONTROLLER_MISSIONS_REQ" });
-    dispatch({
-      type: "MEDICAL_CONTROLLER_MISSIONS_RESP",
-      payload: {
-        data: {
-          medicalControllerMissions: {
-            edges: missions.map((mission) => ({ node: mission })),
-            totalCount: missions.length,
-            pageInfo: {
-              hasNextPage: false,
-              hasPreviousPage: false,
-              startCursor: null,
-              endCursor: null,
-            },
-          },
+export function createMission(mission, clientMutationLabel) {
+  const mutationInput = `
+      regionId: ${decodeId(mission.region.id)}
+      districtId: ${decodeId(mission.district.id)}
+      healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
+      startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
+      endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
+    `;
+
+  let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
+  var requestedDateTime = new Date();
+
+  return async (dispatch) => {
+    const response = await dispatch(
+      graphql(
+        mutation.payload,
+        [
+          "MEDICAL_CONTROLLER_MISSION_CREATE_REQ",
+          "MEDICAL_CONTROLLER_MISSION_CREATE_RESP",
+          "MEDICAL_CONTROLLER_MISSION_CREATE_ERR",
+        ],
+        {
+          clientMutationId: mutation.clientMutationId,
+          clientMutationLabel,
+          requestedDateTime,
         },
-      },
-      meta: { filters },
-    });
+      ),
+    );
+
+    // Trigger fetching the mutation log so the action is recorded/available
+    try {
+      dispatch(fetchMutation(mutation.clientMutationId));
+    } catch (err) {
+      console.error("fetchMutation error", err);
+    }
+
+    return response;
   };
 }
 
-export function createMedicalControllerMission(_, payload, onSuccess) {
-  return (dispatch) => {
-    dispatch({ type: "MEDICAL_CONTROLLER_MISSION_CREATE_REQ" });
-
-    // Mock: simule la création et ajoute dans la liste locale
-    setTimeout(() => {
-      const newMission = {
-        uuid: payload.code,
-        code: payload.code,
-        region: payload.regionId,
-        district: payload.districtId,
-        healthFacilities: payload.healthFacilityIds,
-        startDate: payload.startDate,
-        endDate: payload.endDate,
-        status: MISSION_STATUS_OPEN,
-      };
-
-      MOCK_MISSIONS.unshift(newMission);
-
-      dispatch({ type: "MEDICAL_CONTROLLER_MISSION_CREATE_RESP", payload: { mission: newMission } });
-
-      if (typeof onSuccess === "function") {
-        onSuccess(newMission);
-      }
-    }, 300);
-  };
-}

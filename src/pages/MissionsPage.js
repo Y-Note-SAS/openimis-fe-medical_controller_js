@@ -6,7 +6,7 @@ import { withStyles, withTheme } from "@material-ui/core/styles";
 import { combine, Helmet, useTranslations, withModulesManager } from "@openimis/fe-core";
 import MissionsSearcher from "../components/MissionsSearcher";
 import CreateMissionDialog from "../components/CreateMissionDialog";
-import { fetchMedicalControllerMissions } from "../actions";
+import { fetchMissions } from "../actions";
 import { MODULE_NAME, RIGHT_MEDICAL_CONTROLLER } from "../constants";
 
 const styles = (theme) => ({
@@ -26,7 +26,7 @@ const MissionsPage = (props) => {
   if (!rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
   const handleMissionCreated = () => {
-    dispatch(fetchMedicalControllerMissions(modulesManager, []));
+    dispatch(fetchMissions(modulesManager, []));
   };
 
   return (
@@ -39,7 +39,7 @@ const MissionsPage = (props) => {
         fetching={missions.isFetching ?? false}
         fetched={missions.isFetched ?? false}
         error={missions.error}
-        onFiltersChange={(filters) => dispatch(fetchMedicalControllerMissions(modulesManager, filters))}
+        onFiltersChange={(filters) => dispatch(fetchMissions(modulesManager, filters))}
       />
       <div className={classes.fab}>
         <Fab color="primary" onClick={() => setCreateDialogOpen(true)}>
