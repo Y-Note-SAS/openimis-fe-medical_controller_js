@@ -20,7 +20,7 @@ const DEFAULT_CONFIG = {
   ],
   "core.Router": [
     { path: ROUTE_MEDICAL_CONTROLLER_MISSIONS, component: MissionsPage },
-    { path: `${ROUTE_MEDICAL_CONTROLLER_MISSIONS}/mission/:mission_id`, component: MissionPage },
+    { path: `${ROUTE_MEDICAL_CONTROLLER_MISSIONS}/mission/:mission_code`, component: MissionPage },
   ],
   "core.MainMenu": [MedicalControllerMainMenu],
 };

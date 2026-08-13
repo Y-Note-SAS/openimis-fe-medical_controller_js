@@ -57,8 +57,6 @@ const MainPanel = (props) => {
 
   const currentYear = new Date().getFullYear();
 
-  console.log("edited", edited);
-
   return (
     <Grid container direction="row">
       <Grid item xs={2} className={classes.item}>
@@ -122,11 +120,11 @@ const MainPanel = (props) => {
               readOnly={readOnly}
             />
           </Grid>
-          <Grid item xs={3} className={classes.item}>
+          <Grid item xs={2} className={classes.item}>
             <YearPicker
               value={getYear(edited.startDate)}
               withLabel={false}
-              min={2022}
+              min={getYear(edited.startDate)}
               max={currentYear + 1}
               readOnly={readOnly}
             />
@@ -138,25 +136,25 @@ const MainPanel = (props) => {
           {formatMessage("medical_controller.MissionFormMainPanel.endDate")}
         </FormLabel>
         <Grid container direction="row" spacing={1} wrap="nowrap">
-          <Grid item className={classes.item}>
+          <Grid item xs={4} className={classes.item}>
             <MonthPicker
               value={getMonth(edited.endDate)}
               withLabel={false}
               readOnly={readOnly}
             />
           </Grid>
-          <Grid item className={classes.item}>
+          <Grid item xs={2} className={classes.item}>
             <YearPicker
               value={getYear(edited.endDate)}
               withLabel={false}
-              min={2022}
+              min={getYear(edited.endDate)}
               max={currentYear + 1}
               readOnly={readOnly}
             />
           </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={2} className={classes.item}>
+      <Grid item xs={1} className={classes.item}>
         <ConstantBasedPicker
           module={MODULE_NAME}
           label="missions.status"

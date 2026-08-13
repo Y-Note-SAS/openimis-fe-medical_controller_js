@@ -68,7 +68,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.mission,
           isFetching: false,
           isFetched: true,
-          item: action.payload?.data?.missions ? parseData(action.payload.data.missions[0]) : null,
+          item: action.payload?.data?.missions ? parseData(action.payload.data.missions)[0] : null,
           error: formatGraphQLError(action.payload),
         },
       };

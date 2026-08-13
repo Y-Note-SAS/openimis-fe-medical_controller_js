@@ -32,8 +32,7 @@ const MissionsPage = (props) => {
   };
 
   const onDoubleClick = (mission, newTab = false) => {
-    // Just open the mission detail page; details will be fetched by the detail page
-    historyPush(modulesManager, history, "medical_controller.route.mission", [mission.id], newTab);
+    historyPush(modulesManager, history, "medical_controller.route.mission", [mission.missionCode], newTab);
   };
 
   return (
