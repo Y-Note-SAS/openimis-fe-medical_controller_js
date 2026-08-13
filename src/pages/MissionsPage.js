@@ -6,7 +6,7 @@ import { withStyles, withTheme } from "@material-ui/core/styles";
 import { combine, Helmet, historyPush, useHistory, useTranslations, withModulesManager } from "@openimis/fe-core";
 import MissionsSearcher from "../components/MissionsSearcher";
 import CreateMissionDialog from "../components/CreateMissionDialog";
-import { fetchMissions } from "../actions";
+import { fetchMissions, fetchMission } from "../actions";
 import { MODULE_NAME, RIGHT_MEDICAL_CONTROLLER } from "../constants";
 
 const styles = (theme) => ({
@@ -32,6 +32,7 @@ const MissionsPage = (props) => {
   };
 
   const onDoubleClick = (mission, newTab = false) => {
+    // Just open the mission detail page; details will be fetched by the detail page
     historyPush(modulesManager, history, "medical_controller.route.mission", [mission.id], newTab);
   };
 

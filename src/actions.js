@@ -1,4 +1,11 @@
-import { formatMutation, formatPageQueryWithCount, graphql, decodeId, fetchMutation } from "@openimis/fe-core";
+import { 
+  formatMutation, 
+  formatPageQueryWithCount, 
+  graphql, 
+  decodeId, 
+  fetchMutation,
+  formatQuery,
+} from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
 export function fetchMissions(filters) {
@@ -10,7 +17,7 @@ export function fetchMissions(filters) {
       "missionCode",
       "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
       "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
-      "user { id, lastName, otherNames }",
+      "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
       "status",
@@ -18,6 +25,23 @@ export function fetchMissions(filters) {
   );
 
   return graphql(query, "MEDICAL_CONTROLLER_MISSIONS");
+}
+
+export function fetchMission(mm, missionCode) {
+  let projections = [
+    "id",
+    "missionCode",
+    "user { id lastName otherNames username }",
+    "healthFacilities { edges { node { id healthFacility { id uuid code name level} } } }",
+    "region { uuid id code name parent {id uuid code name type} type }",
+    "district { uuid id code name parent {id uuid code name type} type }",
+    "startDate",
+    "endDate",
+    "status",
+  ];
+  
+  const payload = formatPageQueryWithCount("missions", [`missionCode: "${missionCode}"`], projections);
+  return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
 }
 
 export function createMission(mission, clientMutationLabel) {

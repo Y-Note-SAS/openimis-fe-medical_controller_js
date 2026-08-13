@@ -40,11 +40,24 @@ const MainPanel = (props) => {
     intl
   } = props;
 
+  // Normalize edited.healthFacilities into a safe array of healthFacility objects
+  const _rawHealthFacilities = edited?.healthFacilities;
+  let displayedHealthFacilities = [];
+  if (Array.isArray(_rawHealthFacilities)) {
+    displayedHealthFacilities = _rawHealthFacilities.map((hf) => hf?.healthFacility ?? hf);
+  } else if (_rawHealthFacilities && Array.isArray(_rawHealthFacilities.edges)) {
+    displayedHealthFacilities = _rawHealthFacilities.edges.map((e) => e?.node?.healthFacility ?? e?.node ?? e);
+  } else {
+    displayedHealthFacilities = [];
+  }
+
   const dispatch = useDispatch();
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
 
   const currentYear = new Date().getFullYear();
+
+  console.log("edited", edited);
 
   return (
     <Grid container direction="row">
@@ -52,8 +65,8 @@ const MainPanel = (props) => {
         <TextInput
           module="medical_controller"
           label="missions.details.code"
-          value={edited?.code ?? ""}
-          onChange={(v) => onEditedChanged({ ...edited, code: v })}
+          value={edited?.missionCode ?? ""}
+          onChange={(v) => onEditedChanged({ ...edited, missionCode: v })}
           readOnly={readOnly}
           autoFocus={autoFocus}
         />
@@ -81,7 +94,7 @@ const MainPanel = (props) => {
       <Grid item xs={5} className={classes.item}>
         <PublishedComponent
           pubRef="location.HealthFacilityPicker"
-          value={edited.healthFacilities}
+          value={displayedHealthFacilities}
           district={edited.district}
           region={edited.region}
           multiple
@@ -92,7 +105,7 @@ const MainPanel = (props) => {
       <Grid item xs={12} sm={6} md={3} className={classes.item}>
         <PublishedComponent
           pubRef="medical_controller.MedicalControllerPicker"
-          value={edited.medicalController}
+          value={edited.user}
           label={formatMessage("medical_controller.missions.medicalController")}
           readOnly={readOnly}
         />
