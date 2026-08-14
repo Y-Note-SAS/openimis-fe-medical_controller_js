@@ -43,7 +43,6 @@ const MissionForm = (props) => {
 
   const handleEditedChanged = (newMission) => {
     setMission(newMission);
-    console.log("mission", mission)
     if (onChange) {
       onChange(newMission);
     }
