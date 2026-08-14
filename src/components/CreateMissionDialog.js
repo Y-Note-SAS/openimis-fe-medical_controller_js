@@ -133,10 +133,10 @@ const CreateMissionDialog = (props) => {
 
   const save = async () => {
     try {
-      const response = await props.journalize(props.createMission(
+      const response = await props.createMission(
         mission,
         formatMessage(intl, MODULE_NAME, "createMission"),
-      ));
+      );
 
       // If the action returned an error, don't close dialog
       if (!response || response.error) return;
