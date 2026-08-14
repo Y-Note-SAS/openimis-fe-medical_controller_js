@@ -47,6 +47,7 @@ const MissionsPage = (props) => {
         error={missions.error}
         onFiltersChange={(filters) => dispatch(fetchMissions(filters))}
         onDoubleClick={onDoubleClick}
+        onCreated={handleMissionCreated}
       />
       <div className={classes.fab}>
         <Fab color="primary" onClick={() => setCreateDialogOpen(true)}>
