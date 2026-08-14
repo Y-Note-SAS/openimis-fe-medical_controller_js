@@ -21,7 +21,8 @@ import {
   TextInput,
   withModulesManager,
   MonthPicker,
-  YearPicker
+  YearPicker,
+  journalize,
 } from "@openimis/fe-core";
 import { createMission } from "../actions";
 import { MODULE_NAME } from "../constants";
@@ -46,11 +47,6 @@ const styles = (theme) => ({
   fieldItem: {
     padding: theme.spacing(1),
   },
-  errorText: {
-    color: theme.palette.error.main,
-    fontSize: "0.75rem",
-    marginTop: theme.spacing(0.5),
-  },
   actions: {
     paddingRight: theme.spacing(2),
     paddingBottom: theme.spacing(1),
@@ -70,36 +66,6 @@ const styles = (theme) => ({
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1),
-  },
-  monthField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
-  },
-  yearField: {
-    width: 100,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 6,
-      height: 40,
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "10px 14px",
-      textAlign: "center",
-      fontSize: "0.875rem",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#d1d5db",
-    },
   },
 });
 
@@ -149,7 +115,6 @@ const CreateMissionDialog = (props) => {
   };
 
   const onChangeHealthFacilities = (value) => {
-    console.log(value)
     setMission((prev) => ({
       ...prev,
       region: value?.length > 0 ? value[0]?.location?.parent : mission.region,
@@ -163,15 +128,15 @@ const CreateMissionDialog = (props) => {
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
     return !!mission.region && !!mission.district && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
-       && !!mission.endYear && (endDate > startDate);
+      && !!mission.endYear && (endDate > startDate);
   };
 
   const save = async () => {
     try {
-      const response = await props.createMission(
+      const response = await props.journalize(props.createMission(
         mission,
         formatMessage(intl, MODULE_NAME, "createMission"),
-      );
+      ));
 
       // If the action returned an error, don't close dialog
       if (!response || response.error) return;
@@ -214,7 +179,7 @@ const CreateMissionDialog = (props) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle disableTypography className={classes.dialogTitle}>
         <Typography variant="h6" className={classes.titleText}>
-          {formatMessage(intl, MODULE_NAME,"createMission.title")}
+          {formatMessage(intl, MODULE_NAME, "createMission.title")}
         </Typography>
       </DialogTitle>
 
@@ -350,7 +315,7 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission }, dispatch);
+const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission, journalize }, dispatch);
 
 const enhance = combine(withModulesManager, withStyles(styles), connect(null, mapDispatchToProps));
 

@@ -4,18 +4,16 @@ import { MODULE_NAME } from "../constants";
 
 const MOCK_MEDICAL_CONTROLLERS = [
   {
-    id: "medical-controller-1",
-    uuid: "medical-controller-1",
-    code: "CM001",
-    lastName: "NTSOULOUNG",
-    otherNames: "NTSOUI Armel",
+    id: "VXNlckdRTFR5cGU6YmM1NTQyNGYtMDcxMi00ODQwLWEyZjMtMGUyOTNiMGI1ZjM4",
+    lastName: "bilongo",
+    otherNames: "joseph",
+    username: "Admin-jo"
   },
   {
-    id: "medical-controller-2",
-    uuid: "medical-controller-2",
-    code: "CM002",
-    lastName: "NDONNANG",
-    otherNames: "NDONL Romeo",
+    id: "VXNlckdREFTGTGRTQyNGYtMDcxMi00ODQwLWEyZjMtMGUyOTNiMGI1ZjM4",
+    lastName: "Dr",
+    otherNames: "Baboke",
+    username: "Admin-baboke"
   },
 ];
 
@@ -42,12 +40,12 @@ const MedicalControllerPicker = (props) => {
     if (!search) return MOCK_MEDICAL_CONTROLLERS;
 
     return MOCK_MEDICAL_CONTROLLERS.filter((controller) =>
-      `${controller.code} ${controller.lastName} ${controller.otherNames}`.toLowerCase().includes(search)
+      `${controller.username} ${controller.lastName} ${controller.otherNames}`.toLowerCase().includes(search)
     );
   }, [searchString]);
 
   const formatMedicalController = (controller) =>
-    controller ? `${controller.code} ${controller.lastName} ${controller.otherNames}` : "";
+    controller ? `${controller.username} ${controller.lastName} ${controller.otherNames}` : "";
 
   return (
     <Autocomplete
