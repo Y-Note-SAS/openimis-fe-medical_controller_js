@@ -110,7 +110,7 @@ const CreateMissionDialog = (props) => {
       ...prev,
       region: value?.parent ?? mission.region,
       district: value,
-      healthFacilities: mission.healthFacilities || [],
+      healthFacilities: !!value ? mission.healthFacilities : [],
     }));
   };
 
