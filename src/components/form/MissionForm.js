@@ -24,10 +24,30 @@ const MissionForm = (props) => {
     }
   }, [dispatch, modulesManager, mission_code]);
 
-  const mission = useSelector((state) => state.medical_controller?.mission?.item ?? {});
+  const fetchedMission = useSelector((state) => state.medical_controller?.mission?.item ?? {});
   const isFetching = useSelector((state) => state.medical_controller?.mission?.isFetching ?? false);
   const isFetched = useSelector((state) => state.medical_controller?.mission?.isFetched ?? false);
   const error = useSelector((state) => state.medical_controller?.mission?.error ?? null);
+  const [mission, setMission] = useState({});
+
+  useEffect(() => {
+    if (isFetched && fetchedMission) {
+      setMission((prev) => {
+        if (prev?.id === fetchedMission?.id && prev?.missionCode === fetchedMission?.missionCode) {
+          return prev;
+        }
+        return fetchedMission;
+      });
+    }
+  }, [isFetched, fetchedMission]);
+
+  const handleEditedChanged = (newMission) => {
+    setMission(newMission);
+    console.log("mission", mission)
+    if (onChange) {
+      onChange(newMission);
+    }
+  };
 
   return (
     <div className={clsx(classes.page, readOnly && classes.locked)}>
@@ -37,11 +57,11 @@ const MissionForm = (props) => {
           <Form
             module="medical_controller"
             title={"missions.details.title"}
-            titleParams={{ missionCode: mission.missionCode ?? "" }}
+            titleParams={{ missionCode: mission.missionCode ?? fetchedMission.missionCode ?? "" }}
             readOnly={readOnly}
-            onEditedChanged={onChange}
+            onEditedChanged={handleEditedChanged}
             edited={mission}
-            edited_id={mission.id}
+            edited_id={mission.id ?? fetchedMission.id}
             HeadPanel={MainPanel}
             Panels={[SamplePanel]}
             back={onBack}
