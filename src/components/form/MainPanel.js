@@ -1,7 +1,7 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { connect, useDispatch } from "react-redux";
 
-import { Grid, FormLabel } from "@material-ui/core";
+import { Grid, FormLabel, Button } from "@material-ui/core";
 import { withTheme, withStyles } from "@material-ui/core/styles";
 
 import {
@@ -78,7 +78,7 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.region")}
         />
       </Grid>
-      <Grid item xs={3} className={classes.item}>
+      <Grid item xs={2} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
@@ -89,7 +89,7 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.district")}
         />
       </Grid>
-      <Grid item xs={5} className={classes.item}>
+      <Grid item xs={displayedHealthFacilities.length < 6 ? 6 : 12} className={classes.item}>
         <PublishedComponent
           pubRef="location.HealthFacilityPicker"
           value={displayedHealthFacilities}
