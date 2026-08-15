@@ -1,16 +1,19 @@
 import React, { Fragment, useState } from "react";
-import { Grid, Button, Typography, Divider, Paper } from "@material-ui/core";
+import { Grid, Button, Typography, Divider, Paper, Table, TableHead, TableBody, TableRow, TableCell } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
-import { 
-    combine, 
-    FormattedMessage, 
-    PublishedComponent, 
-    SelectInput, 
-    useTranslations 
+import GetAppIcon from "@material-ui/icons/GetApp";
+import StopIcon from "@material-ui/icons/Stop";
+import {
+    combine,
+    FormattedMessage,
+    PublishedComponent,
+    SelectInput,
+    useTranslations
 } from "@openimis/fe-core";
 import { MODULE_NAME } from "../../constants";
 import FilterMissionPanel from "./FilterMissionPanel";
+import MissionHistoryPanel from "./MissionHistoryPanel";
 
 const styles = (theme) => ({
     tableTitle: {
@@ -24,6 +27,9 @@ const styles = (theme) => ({
         height: "100%",
     },
     paper: theme.paper.paper,
+    table: {
+        minWidth: "100%",
+    },
     actionButton: {
         marginLeft: "auto",
         backgroundColor: theme.palette.primary.main,
@@ -71,8 +77,8 @@ const buildMissionFilters = (mission = {}) => {
 };
 
 const SamplePanel = (props) => {
-    const { classes, edited, onEditedChanged, readOnly, actions, modulesManager } = props;
-    const { formatMessage } = useTranslations("medical_controller", modulesManager);
+    const { classes, edited, onEditedChanged, readOnly, modulesManager } = props;
+    const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
@@ -115,6 +121,7 @@ const SamplePanel = (props) => {
     const handleGenerateSample = () => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
+        onEditedChanged?.({ ...edited, _showSampleActions: true });
 
         if (!showFilterPanel) {
             setShowFilterPanel(true);
@@ -130,7 +137,25 @@ const SamplePanel = (props) => {
         }
     };
 
+    const handleDownloadMission = () => {
+        if (props.onDownloadMission) return props.onDownloadMission(edited);
+        console.log("Download mission", edited);
+    };
+
+    const handleCloseMission = () => {
+        if (props.onCloseMission) props.onCloseMission(edited);
+        setHasGeneratedSample(false);
+        setShowFilterPanel(false);
+        onEditedChanged?.({ ...edited, _showSampleActions: false });
+    };
+
     const categories = ["Categorie 1", "Categorie 2", "Categorie 3", "Categorie 4"];
+
+    const historyActions = [
+        { date: "2026-08-01", time: "09:30", controller: "Dr. Jean Dupont", action: "Création de mission" },
+        { date: "2026-08-02", time: "11:15", controller: "Dr. Marie Curie", action: "Validation" },
+        { date: "2026-08-05", time: "14:45", controller: "Dr. Paul Martin", action: "Clôture" },
+    ];
 
     return (
         <Fragment>
@@ -141,15 +166,40 @@ const SamplePanel = (props) => {
                             <FormattedMessage module={MODULE_NAME} id="MissionSamplePanel.title" />
                         </Typography>
                     </Grid>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        className={classes.actionButton}
-                        startIcon={<PlayArrowIcon />}
-                        onClick={handleGenerateSample}
-                    >
-                        {hasGeneratedSample ? "Ajouter un échantillon" : "Obtenir un échantillon"}
-                    </Button>
+                    <Grid item className={classes.item} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                        {hasGeneratedSample && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="default"
+                                    className={classes.actionButton}
+                                    startIcon={<GetAppIcon />}
+                                    onClick={handleDownloadMission}
+                                >
+                                    {formatMessage("MissionSamplePanel.download")}
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    className={classes.actionButton}
+                                    startIcon={<StopIcon />}
+                                    onClick={handleCloseMission}
+                                >
+                                    {formatMessage("MissionSamplePanel.close")}
+                                </Button>
+                            </>
+                        )}
+
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            className={classes.actionButton}
+                            startIcon={<PlayArrowIcon />}
+                            onClick={handleGenerateSample}
+                        >
+                            {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
+                        </Button>
+                    </Grid>
                 </Grid>
 
                 <Divider />
@@ -194,6 +244,10 @@ const SamplePanel = (props) => {
                     onChangeFilters={(newFilters) => setFilters(newFilters)}
                     forAudit={true}
                 />
+            )}
+
+            {hasGeneratedSample && (
+                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
             )}
         </Fragment>
     );
