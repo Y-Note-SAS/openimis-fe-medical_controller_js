@@ -68,7 +68,7 @@ const FilterMissionPanel = (props) => {
 
     return (
         <Grid container className={classes.item} spacing={2}>
-            <Grid item xs={12} md={6} className={classes.item}>
+            <Grid item xs={healthFacilitiesValue.length < 6 ? 6 : 12} className={classes.item}>
                 <PublishedComponent
                     pubRef="location.HealthFacilityPicker"
                     value={healthFacilitiesValue}

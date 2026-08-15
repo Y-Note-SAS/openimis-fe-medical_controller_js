@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import clsx from "clsx";
 
 import { withStyles, withTheme } from "@material-ui/core/styles";
 
-import { 
-  Form, 
-  ProgressOrError, 
-  combine, 
+import {
+  Form,
+  ProgressOrError,
+  combine,
   ErrorBoundary,
   useTranslations
 } from "@openimis/fe-core";
@@ -96,27 +96,28 @@ const MissionForm = (props) => {
     },
   );
 
-
-
   return (
     <div className={clsx(classes.page, readOnly && classes.locked)}>
       <ErrorBoundary>
         <ProgressOrError progress={isFetching} error={error} />
         {isFetched && (
-          <Form
-            module="medical_controller"
-            title={"missions.details.title"}
-            titleParams={{ missionCode: mission.missionCode ?? fetchedMission.missionCode ?? "" }}
-            readOnly={readOnly}
-            onEditedChanged={handleEditedChanged}
-            edited={mission}
-            edited_id={mission.id ?? fetchedMission.id}
-            HeadPanel={MainPanel}
-            Panels={[SamplePanel]}
-            back={onBack}
-            actions={actions}
-            handleShowSampleActions={handleShowSampleActions}
-          />)}
+          <Fragment>
+            <Form
+              module="medical_controller"
+              title={"missions.details.title"}
+              titleParams={{ missionCode: mission.missionCode ?? fetchedMission.missionCode ?? "" }}
+              readOnly={readOnly}
+              onEditedChanged={handleEditedChanged}
+              edited={mission}
+              edited_id={mission.id ?? fetchedMission.id}
+              HeadPanel={MainPanel}
+              Panels={[SamplePanel]}
+              back={onBack}
+              actions={actions}
+              handleShowSampleActions={handleShowSampleActions}
+            />
+          </Fragment>
+        )}
       </ErrorBoundary>
     </div>
   );

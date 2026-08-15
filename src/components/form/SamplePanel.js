@@ -77,11 +77,11 @@ const buildMissionFilters = (mission = {}) => {
 };
 
 const SamplePanel = (props) => {
-    const { classes, edited, onEditedChanged, readOnly, modulesManager } = props;
-    const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+    const { classes, edited, onEditedChanged, readOnly, actions, modulesManager, handleShowSampleActions } = props;
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
+    const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
 
     const sample = {
         ...defaultSample,
@@ -121,7 +121,7 @@ const SamplePanel = (props) => {
     const handleGenerateSample = () => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
-        onEditedChanged?.({ ...edited, _showSampleActions: true });
+        handleShowSampleActions();
 
         if (!showFilterPanel) {
             setShowFilterPanel(true);
@@ -146,7 +146,6 @@ const SamplePanel = (props) => {
         if (props.onCloseMission) props.onCloseMission(edited);
         setHasGeneratedSample(false);
         setShowFilterPanel(false);
-        onEditedChanged?.({ ...edited, _showSampleActions: false });
     };
 
     const categories = ["Categorie 1", "Categorie 2", "Categorie 3", "Categorie 4"];
@@ -166,30 +165,7 @@ const SamplePanel = (props) => {
                             <FormattedMessage module={MODULE_NAME} id="MissionSamplePanel.title" />
                         </Typography>
                     </Grid>
-                    <Grid item className={classes.item} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-                        {hasGeneratedSample && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    color="default"
-                                    className={classes.actionButton}
-                                    startIcon={<GetAppIcon />}
-                                    onClick={handleDownloadMission}
-                                >
-                                    {formatMessage("MissionSamplePanel.download")}
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    className={classes.actionButton}
-                                    startIcon={<StopIcon />}
-                                    onClick={handleCloseMission}
-                                >
-                                    {formatMessage("MissionSamplePanel.close")}
-                                </Button>
-                            </>
-                        )}
-
+                    <Grid item className={classes.item} style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
                         <Button
                             variant="contained"
                             color="primary"
