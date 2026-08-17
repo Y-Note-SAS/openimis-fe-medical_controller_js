@@ -1,24 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Autocomplete, useModulesManager, useTranslations } from "@openimis/fe-core";
+import { Autocomplete, useModulesManager, useTranslations, useGraphqlQuery } from "@openimis/fe-core";
 import { MODULE_NAME } from "../constants";
-
-const MOCK_MEDICAL_CONTROLLERS = [
-  {
-    id: "medical-controller-1",
-    uuid: "medical-controller-1",
-    code: "CM001",
-    lastName: "NTSOULOUNG",
-    otherNames: "NTSOUI Armel",
-  },
-  {
-    id: "medical-controller-2",
-    uuid: "medical-controller-2",
-    code: "CM002",
-    lastName: "NDONNANG",
-    otherNames: "NDONL Romeo",
-  },
-];
-
 const MedicalControllerPicker = (props) => {
   const {
     filterOptions,
@@ -37,17 +19,28 @@ const MedicalControllerPicker = (props) => {
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
   const [searchString, setSearchString] = useState("");
 
-  const options = useMemo(() => {
-    const search = String(searchString ?? "").toLowerCase();
-    if (!search) return MOCK_MEDICAL_CONTROLLERS;
+  const { isLoading, data, error } = useGraphqlQuery(
+    `query MedicalControllerPicker($searchString: String, $first: Int) {
+      medicalControllers(username_Icontains: $searchString, first: $first) {
+        edges {
+          node {
+            id
+            username
+            iUser { id otherNames lastName }
+          }
+        }
+      }
+    }`,
+    { searchString, first: 20 },
+  );
 
-    return MOCK_MEDICAL_CONTROLLERS.filter((controller) =>
-      `${controller.code} ${controller.lastName} ${controller.otherNames}`.toLowerCase().includes(search)
-    );
-  }, [searchString]);
+  const options = useMemo(() => {
+    const nodes = data?.medicalControllers?.edges?.map((e) => e.node) ?? [];
+    return nodes.map((n) => ({ id: n.id, username: n.username, lastName: n.iUser?.lastName, otherNames: n.iUser?.otherNames }));
+  }, [data]);
 
   const formatMedicalController = (controller) =>
-    controller ? `${controller.code} ${controller.lastName} ${controller.otherNames}` : "";
+    controller ? `${controller.username} ${controller.lastName} ${controller.otherNames}` : "";
 
   return (
     <Autocomplete
@@ -59,7 +52,8 @@ const MedicalControllerPicker = (props) => {
       withPlaceholder={withPlaceholder}
       readOnly={readOnly}
       options={options}
-      isLoading={false}
+      isLoading={isLoading}
+      error={error}
       value={value}
       getOptionLabel={formatMedicalController}
       onChange={(option) => onChange?.(option, option ? formatMedicalController(option) : null)}

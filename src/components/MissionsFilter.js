@@ -14,7 +14,7 @@ import {
 } from "@openimis/fe-core";
 import { Grid, TextField } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { MISSION_STATUSES, MODULE_NAME } from "../constants";
+import { MISSION_STATUS, MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth } from "../helpers/utils";
 
 const styles = (theme) => ({
@@ -52,27 +52,27 @@ const MissionsFilter = (props) => {
   const codeFilter = (value) => ({
     id: "code",
     value,
-    filter: value ? `code_Icontains: "${value}"` : null,
+    filter: value ? `missionCode_Icontains: "${value}"` : null,
   });
   const regionFilter = (value) => ({
     id: "region",
     value,
-    filter: value ? `location_Uuid: "${value.uuid}"` : null,
+    filter: value ? `region_Id: "${value.id}"` : null,
   });
   const districtFilter = (value) => ({
     id: "district",
     value,
-    filter: value ? `location_Uuid: "${value.uuid}"` : null,
+    filter: value ? `district_Id: "${value.id}"` : null,
   });
   const controllerFilter = (value) => ({
     id: "medicalController",
     value,
-    filter: value ? `medicalController_Uuid: "${value.uuid}"` : null,
+    filter: value ? `user_Id: "${value.id}"` : null,
   });
   const statusFilter = (value) => ({
     id: "status",
     value,
-    filter: value ? `status: "${value}"` : null,
+    filter: value ? `status: ${value}` : null,
   });
   const startDateFilter = (value) => ({
     id: "startDate",
@@ -88,29 +88,38 @@ const MissionsFilter = (props) => {
   const onCodeChange = useDebounceCb((value) => onChangeFilters([codeFilter(value)]), debounceTime);
 
   const createMonthChangeHandler = (prefix, e) => {
-    const year = parseInt(filterValue(`${prefix}Year`), 10);
+    const yearRaw = filterValue(`${prefix}Year`);
+    const year = parseInt(yearRaw, 10);
+    const month = parseInt(e, 10);
 
-    // Mettre à jour le mois
     const monthFilter = {
       id: `${prefix}Month`,
       value: e,
       filter: null,
     };
 
-    // Si mois et année sont valides, construire la date
-    if (!!year) {
-      const dateStr = getFirstDayOfMonth(year, e);
+    // Préparer la liste des mises à jour à envoyer en une seule fois
+    const updates = [monthFilter];
+
+    // Si mois ET année valides, ajouter le filtre de date complet
+    if (!Number.isNaN(year) && year && !Number.isNaN(month) && month) {
+      const dateStr = getFirstDayOfMonth(year, month);
       const filter = prefix == "start" ? startDateFilter(dateStr) : endDateFilter(dateStr);
-      onChangeFilters([monthFilter, filter]);
+      updates.push(filter);
     } else {
-      const filter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
-      onChangeFilters([monthFilter, filter]);
+      // sinon, s'il y avait un filtre de date précédent, le nettoyer
+      const clearFilter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
+      updates.push(clearFilter);
     }
+
+    // Appel unique pour mettre à jour le mois (toujours) et le filtre de date (si applicable)
+    onChangeFilters(updates);
   };
 
   const createYearChangeHandler = (prefix, e) => {
     console.log(`${prefix}: ${e}`);
-    const month = parseInt(filterValue(`${prefix}Month`), 10);
+    const monthRaw = filterValue(`${prefix}Month`);
+    const month = parseInt(monthRaw, 10);
 
     const yearFilter = {
       id: `${prefix}Year`,
@@ -118,14 +127,23 @@ const MissionsFilter = (props) => {
       filter: null,
     };
 
-    if (!!month) {
-      const dateStr = getFirstDayOfMonth(e, month);
+    // Préparer la liste des mises à jour à envoyer en une seule fois
+    const updates = [yearFilter];
+
+    // Si année ET mois valides, ajouter le filtre de date complet
+    const year = parseInt(e, 10);
+    if (!Number.isNaN(year) && year && !Number.isNaN(month) && month) {
+      const dateStr = getFirstDayOfMonth(year, month);
       const filter = prefix == "start" ? startDateFilter(dateStr) : endDateFilter(dateStr);
-      onChangeFilters([yearFilter, filter]);
+      updates.push(filter);
     } else {
-      const filter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
-      onChangeFilters([yearFilter, filter]);
+      // sinon, nettoyer le filtre de date s'il existait
+      const clearFilter = prefix == "start" ? startDateFilter(null) : endDateFilter(null);
+      updates.push(clearFilter);
     }
+
+    // Appel unique pour mettre à jour l'année (toujours) et le filtre de date (si applicable)
+    onChangeFilters(updates);
   };
 
   const currentYear = new Date().getFullYear();
@@ -135,6 +153,8 @@ const MissionsFilter = (props) => {
   const handleEndMonthChange = (e) => createMonthChangeHandler("end", e);
   const startMonth = parseInt(filterValue("startMonth"), 10);
   const endMonth = parseInt(filterValue("endMonth"), 10);
+  const _startYear = parseInt(filterValue("startYear"), 10);
+  const startYear = Number.isNaN(_startYear) ? null : _startYear;
 
   return (
     <Grid container className={classes.form}>
@@ -159,7 +179,8 @@ const MissionsFilter = (props) => {
         field={
           <Grid item xs={12} sm={6} md={3} className={classes.item}>
             <PublishedComponent
-              pubRef="location.RegionPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={0}
               value={filterValue("region")}
               withNull
               label={formatMessage("medical_controller.missions.region")}
@@ -174,12 +195,14 @@ const MissionsFilter = (props) => {
         field={
           <Grid item xs={12} sm={6} md={3} className={classes.item}>
             <PublishedComponent
-              pubRef="location.DistrictPicker"
+              pubRef="location.LocationPicker"
+              locationLevel={1}
               value={filterValue("district")}
               region={filterValue("region")}
               withNull
-              label={formatMessage("medical_controller.missions.district")}
               onChange={(value) => onChangeFilters([districtFilter(value)])}
+              label={formatMessage("medical_controller.missions.district")}
+              parentLocation={filterValue("region")}
             />
           </Grid>
         }
@@ -207,7 +230,7 @@ const MissionsFilter = (props) => {
             <ConstantBasedPicker
               module={MODULE_NAME}
               label="missions.status"
-              constants={MISSION_STATUSES}
+              constants={MISSION_STATUS}
               withNull
               value={filterValue("status")}
               onChange={(value) => onChangeFilters([statusFilter(value)])}
@@ -267,7 +290,7 @@ const MissionsFilter = (props) => {
                   <YearPicker
                     value={filterValue("endYear") || ""}
                     onChange={handleEndYearChange}
-                    min={endMonth < startMonth ? filterValue("startYear") + 1 : filterValue("startYear") || 2020}
+                    min={endMonth < startMonth ? (startYear ? startYear + 1 : 2020) : (startYear || 2020)}
                     max={currentYear + 2}
                     withLabel={false}
                   />

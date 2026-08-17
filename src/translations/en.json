@@ -1,5 +1,24 @@
 {
   "medical_controller.mainMenu": "Medical Controller",
   "medical_controller.menu.missions": "Missions",
-  "medical_controller.missions.page.title": "Medical Controller Missions"
+  "medical_controller.missions.page.title": "Medical Controller Missions",
+  "missions.page.title": "Missions",
+  "missions.details.title": "Mission details",
+  "missions.details.missionHeader": "Mission information",
+  "missions.details.code": "Code de mission",
+  "missions.details.status": "Statut",
+  "missions.details.region": "Region",
+  "missions.details.district": "District",
+  "missions.details.medicalController": "Contrôleur médical",
+  "missions.details.startDate": "Start date",
+  "missions.details.endDate": "End date",
+  "missions.details.sampleHeader": "ÉCHANTILLON",
+  "missions.details.category1": "Categorie 1",
+  "missions.details.category2": "Categorie 2",
+  "missions.details.category3": "Categorie 3",
+  "missions.details.category4": "Categorie 4",
+  "missions.details.back": "Retour",
+  "missions.details.notFound": "Mission non trouvée.",
+  "missions.status.open": "Open",
+  "missions.status.closed": "Closed"
 }

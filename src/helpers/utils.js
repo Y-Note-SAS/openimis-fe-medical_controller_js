@@ -1,5 +1,13 @@
 export const formatMonthYear = (dateString) => {
+    if (!dateString || typeof dateString !== "string") {
+        return "";
+    }
+
     const [year, month, day] = dateString.split("-").map(Number);
+
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+        return "";
+    }
 
     const date = new Date(year, month - 1, day);
 
@@ -9,6 +17,26 @@ export const formatMonthYear = (dateString) => {
     });
 
     return result.charAt(0).toUpperCase() + result.slice(1);
+};
+
+export const getMonth = (dateString) => {
+    if (!dateString || typeof dateString !== "string") {
+        return null;
+    }
+
+    const parts = dateString.split("-").map(Number);
+    const [, month] = parts;
+    return Number.isFinite(month) ? month : null;
+};
+
+export const getYear = (dateString) => {
+    if (!dateString || typeof dateString !== "string") {
+        return null;
+    }
+
+    const parts = dateString.split("-").map(Number);
+    const [year] = parts;
+    return Number.isFinite(year) ? year : null;
 };
 
 export const getFirstDayOfMonth = (year, month) => {

@@ -8,6 +8,12 @@ const DEFAULT_STATE = {
     pageInfo: { totalCount: 0 },
     error: null,
   },
+  mission: {
+    isFetching: false,
+    isFetched: false,
+    item: null,
+    error: null,
+  },
   isCreating: false,
   createError: null,
 };
@@ -31,8 +37,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.missions,
           isFetching: false,
           isFetched: true,
-          items: parseData(action.payload.data.medicalControllerMissions),
-          pageInfo: pageInfo(action.payload.data.medicalControllerMissions),
+          items: parseData(action.payload.data.missions),
+          pageInfo: pageInfo(action.payload.data.missions),
           error: formatGraphQLError(action.payload),
         },
       };
@@ -41,6 +47,36 @@ const reducer = (state = DEFAULT_STATE, action) => {
         ...state,
         missions: {
           ...state.missions,
+          isFetching: false,
+          error: formatServerError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_REQ":
+      return {
+        ...state,
+        mission: {
+          ...state.mission,
+          isFetching: true,
+          isFetched: false,
+          error: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_RESP":
+      return {
+        ...state,
+        mission: {
+          ...state.mission,
+          isFetching: false,
+          isFetched: true,
+          item: action.payload?.data?.missions ? parseData(action.payload.data.missions)[0] : null,
+          error: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_ERR":
+      return {
+        ...state,
+        mission: {
+          ...state.mission,
           isFetching: false,
           error: formatServerError(action.payload),
         },

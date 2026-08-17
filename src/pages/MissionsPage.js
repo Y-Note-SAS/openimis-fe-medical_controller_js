@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { Add as AddIcon } from "@material-ui/icons";
 import { Fab, Typography } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { combine, Helmet, useTranslations, withModulesManager } from "@openimis/fe-core";
+import { combine, Helmet, historyPush, useHistory, useTranslations, withModulesManager } from "@openimis/fe-core";
 import MissionsSearcher from "../components/MissionsSearcher";
 import CreateMissionDialog from "../components/CreateMissionDialog";
-import { fetchMedicalControllerMissions } from "../actions";
+import { fetchMissions, fetchMission } from "../actions";
 import { MODULE_NAME, RIGHT_MEDICAL_CONTROLLER } from "../constants";
 
 const styles = (theme) => ({
@@ -25,8 +25,14 @@ const MissionsPage = (props) => {
 
   if (!rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
+  const history = useHistory();
+
   const handleMissionCreated = () => {
-    dispatch(fetchMedicalControllerMissions(modulesManager, []));
+    dispatch(fetchMissions([]));
+  };
+
+  const onDoubleClick = (mission, newTab = false) => {
+    historyPush(modulesManager, history, "medical_controller.route.mission", [mission.missionCode], newTab);
   };
 
   return (
@@ -39,7 +45,9 @@ const MissionsPage = (props) => {
         fetching={missions.isFetching ?? false}
         fetched={missions.isFetched ?? false}
         error={missions.error}
-        onFiltersChange={(filters) => dispatch(fetchMedicalControllerMissions(modulesManager, filters))}
+        onFiltersChange={(filters) => dispatch(fetchMissions(filters))}
+        onDoubleClick={onDoubleClick}
+        onCreated={handleMissionCreated}
       />
       <div className={classes.fab}>
         <Fab color="primary" onClick={() => setCreateDialogOpen(true)}>
