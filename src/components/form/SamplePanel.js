@@ -196,6 +196,11 @@ const SamplePanel = (props) => {
                                         value={sample[key] ?? defaultSample[key]}
                                         onChange={(value) => handleChange(key, value)}
                                     />
+                                    {hasGeneratedSample && (
+                                        <Typography variant="body2" style={{ marginTop: 4 }}>
+                                            Total actuel: 0
+                                        </Typography>
+                                    )}
                                 </Grid>
                             );
                         })}
