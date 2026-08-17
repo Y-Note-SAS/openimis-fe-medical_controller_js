@@ -61,6 +61,10 @@ const buildMissionFilters = (mission = {}) => {
             : [];
 
     const missionFilters = {};
+    missionFilters.status = {
+        value: 16,
+        filter: `status: 16`
+    }
     // if (mission.region) {
     //     missionFilters.region = {
     //         value: mission.region,
@@ -160,8 +164,8 @@ const SamplePanel = (props) => {
         <Fragment>
             <Paper className={classes.paper}>
                 <Grid container className={classes.tableTitle}>
-                    <Grid item className={classes.item}>
-                        <Typography>
+                    <Grid item className={classes.paperHeader}>
+                        <Typography variant="h6">
                             <FormattedMessage module={MODULE_NAME} id="MissionSamplePanel.title" />
                         </Typography>
                     </Grid>
@@ -192,6 +196,11 @@ const SamplePanel = (props) => {
                                         value={sample[key] ?? defaultSample[key]}
                                         onChange={(value) => handleChange(key, value)}
                                     />
+                                    {hasGeneratedSample && (
+                                        <Typography variant="body2" style={{ marginTop: 4 }}>
+                                            Total actuel: 0
+                                        </Typography>
+                                    )}
                                 </Grid>
                             );
                         })}
@@ -200,30 +209,34 @@ const SamplePanel = (props) => {
             </Paper>
 
             {showFilterPanel && hasGeneratedSample && (
-                <PublishedComponent
-                    pubRef="claim.ClaimSearcher"
-                    modulesManager={modulesManager}
-                    defaultFilters={filters}
-                    cacheFiltersKey="medicalControllerMissionSampleClaims"
-                    actions={[]}
-                    onDoubleClick={null}
-                    filterPane={(searcherProps) => (
-                        <FilterMissionPanel
-                            {...searcherProps}
-                            edited={edited}
-                            modulesManager={modulesManager}
-                            onChangeFilters={searcherProps.onChangeFilters}
-                        />
-                    )}
-                    edited={edited}
-                    canFetch={true}
-                    onChangeFilters={(newFilters) => setFilters(newFilters)}
-                    forAudit={true}
-                />
+                <Grid className={classes.item}>
+                    <PublishedComponent
+                        pubRef="claim.ClaimSearcher"
+                        modulesManager={modulesManager}
+                        defaultFilters={filters}
+                        cacheFiltersKey="medicalControllerMissionSampleClaims"
+                        actions={[]}
+                        onDoubleClick={null}
+                        filterPane={(searcherProps) => (
+                            <FilterMissionPanel
+                                {...searcherProps}
+                                edited={edited}
+                                modulesManager={modulesManager}
+                                onChangeFilters={searcherProps.onChangeFilters}
+                            />
+                        )}
+                        edited={edited}
+                        canFetch={true}
+                        onChangeFilters={(newFilters) => setFilters(newFilters)}
+                        forAudit={true}
+                    />
+                </Grid>
             )}
 
             {hasGeneratedSample && (
-                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
+                <Grid className={classes.item}>
+                    <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
+                </Grid>
             )}
         </Fragment>
     );

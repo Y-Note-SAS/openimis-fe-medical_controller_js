@@ -9,23 +9,6 @@ import MissionForm from "../components/form/MissionForm";
 const styles = (theme) => ({
     page: theme.page,
     paper: theme.paper,
-    section: {
-        padding: theme.spacing(3),
-        marginBottom: theme.spacing(3),
-    },
-    title: {
-        marginBottom: theme.spacing(2),
-    },
-    fieldLabel: {
-        fontWeight: 600,
-        marginBottom: theme.spacing(1),
-    },
-    fieldValue: {
-        marginBottom: theme.spacing(2),
-    },
-    row: {
-        marginBottom: theme.spacing(1),
-    },
 });
 
 
