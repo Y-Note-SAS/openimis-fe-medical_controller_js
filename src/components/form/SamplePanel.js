@@ -61,6 +61,10 @@ const buildMissionFilters = (mission = {}) => {
             : [];
 
     const missionFilters = {};
+    missionFilters.status = {
+        value: 16,
+        filter: `status: 16`
+    }
     // if (mission.region) {
     //     missionFilters.region = {
     //         value: mission.region,
