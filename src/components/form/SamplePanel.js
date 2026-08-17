@@ -61,6 +61,10 @@ const buildMissionFilters = (mission = {}) => {
             : [];
 
     const missionFilters = {};
+    missionFilters.status = {
+        value: 16,
+        filter: `status: 16`
+    }
     // if (mission.region) {
     //     missionFilters.region = {
     //         value: mission.region,
@@ -192,6 +196,11 @@ const SamplePanel = (props) => {
                                         value={sample[key] ?? defaultSample[key]}
                                         onChange={(value) => handleChange(key, value)}
                                     />
+                                    {hasGeneratedSample && (
+                                        <Typography variant="body2" style={{ marginTop: 4 }}>
+                                            Total actuel: 0
+                                        </Typography>
+                                    )}
                                 </Grid>
                             );
                         })}
