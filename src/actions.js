@@ -1,8 +1,8 @@
-import { 
-  formatMutation, 
-  formatPageQueryWithCount, 
-  graphql, 
-  decodeId, 
+import {
+  formatMutation,
+  formatPageQueryWithCount,
+  graphql,
+  decodeId,
   fetchMutation,
   formatQuery,
 } from "@openimis/fe-core";
@@ -39,7 +39,7 @@ export function fetchMission(mm, missionCode) {
     "endDate",
     "status",
   ];
-  
+
   const payload = formatPageQueryWithCount("missions", [`missionCode: "${missionCode}"`], projections);
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
 }
@@ -74,6 +74,43 @@ export function createMission(mission, clientMutationLabel) {
     );
 
     // Trigger fetching the mutation log so the action is recorded/available
+    try {
+      dispatch(fetchMutation(mutation.clientMutationId));
+    } catch (err) {
+      console.error("fetchMutation error", err);
+    }
+
+    return response;
+  };
+}
+
+export function updateMission(mission, clientMutationLabel) {
+  console.log("mission", mission)
+  const mutationInput = `
+      missionCode: ${mission.missionCode}
+      status: "C"
+    `;
+
+  let mutation = formatMutation("updateMission", mutationInput, clientMutationLabel);
+  var requestedDateTime = new Date();
+
+  return async (dispatch) => {
+    const response = await dispatch(
+      graphql(
+        mutation.payload,
+        [
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_REQ",
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_RESP",
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR",
+        ],
+        {
+          clientMutationId: mutation.clientMutationId,
+          clientMutationLabel,
+          requestedDateTime,
+        },
+      ),
+    );
+
     try {
       dispatch(fetchMutation(mutation.clientMutationId));
     } catch (err) {

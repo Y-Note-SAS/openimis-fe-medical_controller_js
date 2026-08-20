@@ -11,7 +11,7 @@ import {
     SelectInput,
     useTranslations
 } from "@openimis/fe-core";
-import { MODULE_NAME } from "../../constants";
+import { MISSION_STATUS_CLOSED, MODULE_NAME } from "../../constants";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
 
@@ -162,7 +162,7 @@ const SamplePanel = (props) => {
 
     return (
         <Fragment>
-            <Paper className={classes.paper}>
+            {!!edited && edited.status != MISSION_STATUS_CLOSED && (<Paper className={classes.paper}>
                 <Grid container className={classes.tableTitle}>
                     <Grid item className={classes.paperHeader}>
                         <Typography variant="h6">
@@ -206,7 +206,7 @@ const SamplePanel = (props) => {
                         })}
                     </Grid>
                 </Grid>
-            </Paper>
+            </Paper>)}
 
             {showFilterPanel && hasGeneratedSample && (
                 <Grid className={classes.item}>
