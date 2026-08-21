@@ -14,6 +14,13 @@ const DEFAULT_STATE = {
     item: null,
     error: null,
   },
+  claimsSample: {
+    isFetching: false,
+    isFetched: false,
+    items: [],
+    totalCount: 0,
+    error: null,
+  },
   isCreating: false,
   createError: null,
 };

@@ -1,12 +1,72 @@
-import { 
-  formatMutation, 
-  formatPageQueryWithCount, 
-  graphql, 
-  decodeId, 
+import {
+  formatMutation,
+  formatPageQueryWithCount,
+  graphql,
+  decodeId,
   fetchMutation,
   formatQuery,
 } from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
+
+export function fetchClaimsSample(mm, healthFacilityIds, categories, missionCode) {
+  const CLAIM_SAMPLE_PROJECTION = `
+    uuid,
+    code,
+    jsonExt,
+    dateTo,
+    dateClaimed,
+    dateProcessed,
+    feedbackStatus,
+    reviewStatus,
+    claimed,
+    approved,
+    status,
+    restoreId,
+    healthFacility { id uuid name code },
+    insuree ${mm.getProjection("insuree.InsureePicker.projection")},
+  `;
+  const payload = `
+    query {
+      claimsSample(
+        healthFacilityIds: [${healthFacilityIds.map((id) => decodeId(id)).join(", ")}],
+        percentageCategOne: ${categories.category1},
+        percentageCategTwo: ${categories.category2},
+        percentageCategThree: ${categories.category3},
+        percentageCategFour: ${categories.category4},
+        missionCode: "${missionCode}"
+      ) {
+        categoryOne{
+          totalCategory
+          claims{
+            ${CLAIM_SAMPLE_PROJECTION}
+          }
+        }
+        categoryTwo{
+          totalCategory
+          claims{
+            ${CLAIM_SAMPLE_PROJECTION}
+          }
+        }
+
+        categoryThree{
+          totalCategory
+          claims{
+            ${CLAIM_SAMPLE_PROJECTION}
+          }
+        }
+
+        categoryFour{
+          totalCategory
+          claims{
+            ${CLAIM_SAMPLE_PROJECTION}
+          }
+        }
+      }
+    }
+  `;
+
+  return graphql(payload, "MEDICAL_CONTROLLER_CLAIMS_SAMPLE");
+}
 
 export function fetchMissions(filters) {
   const query = formatPageQueryWithCount(
@@ -39,7 +99,7 @@ export function fetchMission(mm, missionCode) {
     "endDate",
     "status",
   ];
-  
+
   const payload = formatPageQueryWithCount("missions", [`missionCode: "${missionCode}"`], projections);
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
 }

@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from "react";
+import { useDispatch } from "react-redux";
 import { Grid, Button, Typography, Divider, Paper, Table, TableHead, TableBody, TableRow, TableCell } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
@@ -12,6 +13,7 @@ import {
     useTranslations
 } from "@openimis/fe-core";
 import { MODULE_NAME } from "../../constants";
+import { fetchClaimsSample } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
 
@@ -82,6 +84,7 @@ const buildMissionFilters = (mission = {}) => {
 
 const SamplePanel = (props) => {
     const { classes, edited, onEditedChanged, readOnly, actions, modulesManager, handleShowSampleActions } = props;
+    const dispatch = useDispatch();
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
@@ -126,6 +129,31 @@ const SamplePanel = (props) => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
         handleShowSampleActions();
+
+        // Extraire les IDs des healthFacilities
+        const rawHealthFacilities = edited?.healthFacilities;
+        let healthFacilityIds = [];
+        if (rawHealthFacilities) {
+            if (Array.isArray(rawHealthFacilities)) {
+                healthFacilityIds = rawHealthFacilities.map((hf) => hf?.healthFacility?.id ?? hf?.id).filter(Boolean);
+            } else if (rawHealthFacilities.edges) {
+                healthFacilityIds = rawHealthFacilities.edges
+                    .map((edge) => edge?.node?.healthFacility?.id ?? edge?.node?.id)
+                    .filter(Boolean);
+            }
+        }
+
+        // Envoyer la requête GraphQL
+        dispatch(fetchClaimsSample(
+            healthFacilityIds,
+            {
+                category1: sample.category1 ?? defaultSample.category1,
+                category2: sample.category2 ?? defaultSample.category2,
+                category3: sample.category3 ?? defaultSample.category3,
+                category4: sample.category4 ?? defaultSample.category4,
+            },
+            edited?.missionCode,
+        ));
 
         if (!showFilterPanel) {
             setShowFilterPanel(true);
