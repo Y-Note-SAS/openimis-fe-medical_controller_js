@@ -208,7 +208,7 @@ const SamplePanel = (props) => {
                 </Grid>
             </Paper>)}
 
-            {showFilterPanel && hasGeneratedSample && (
+            {(
                 <Grid className={classes.item}>
                     <PublishedComponent
                         pubRef="claim.ClaimSearcher"
@@ -233,11 +233,10 @@ const SamplePanel = (props) => {
                 </Grid>
             )}
 
-            {hasGeneratedSample && (
-                <Grid className={classes.item}>
-                    <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
-                </Grid>
-            )}
+            <Grid className={classes.item}>
+                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
+            </Grid>
+
         </Fragment>
     );
 };

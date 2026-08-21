@@ -48,9 +48,9 @@ const MissionForm = (props) => {
   useEffect(() => {
     if (isFetched && fetchedMission) {
       setMission((prev) => {
-        if (prev?.id === fetchedMission?.id && prev?.missionCode === fetchedMission?.missionCode) {
-          return prev;
-        }
+        // if (prev?.id === fetchedMission?.id && prev?.missionCode === fetchedMission?.missionCode) {
+        //   return prev;
+        // }
         return fetchedMission;
       });
     }

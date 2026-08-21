@@ -87,7 +87,7 @@ export function createMission(mission, clientMutationLabel) {
 export function updateMission(mission, clientMutationLabel) {
   console.log("mission", mission)
   const mutationInput = `
-      missionCode: ${mission.missionCode}
+      missionCode: "${mission.missionCode}"
       status: "C"
     `;
 
