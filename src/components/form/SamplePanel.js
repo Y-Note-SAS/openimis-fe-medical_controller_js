@@ -1,4 +1,5 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Grid, Button, Typography, Divider, Paper, Table, TableHead, TableBody, TableRow, TableCell } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
@@ -7,11 +8,14 @@ import StopIcon from "@material-ui/icons/Stop";
 import {
     combine,
     FormattedMessage,
+    ProgressOrError,
     PublishedComponent,
     SelectInput,
-    useTranslations
+    useTranslations,
+    useModulesManager,
 } from "@openimis/fe-core";
-import { MISSION_STATUS_CLOSED, MODULE_NAME } from "../../constants";
+import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED } from "../../constants";
+import { fetchTotalSample, fetchClaimSample } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
 
@@ -60,36 +64,99 @@ const buildMissionFilters = (mission = {}) => {
             ? _rawHealthFacilities.edges.map((edge) => edge?.node?.healthFacility ?? edge)
             : [];
 
+    const healthFacilityIds = healthFacilities
+        .map((hf) => hf?.uuid ?? hf?.id)
+        .filter(Boolean);
+
     const missionFilters = {};
-    missionFilters.status = {
-        value: 16,
-        filter: `status: 16`
+
+    // Filtre sur la catégorie (par défaut null)
+    missionFilters.category = {
+        value: null,
+        filter: null,
+    };
+
+    // Filtre sur le code de la mission
+    if (mission?.missionCode) {
+        missionFilters.missionCode = {
+            value: mission.missionCode,
+            filter: `missionCode: "${mission.missionCode}"`,
+        };
     }
-    // if (mission.region) {
-    //     missionFilters.region = {
-    //         value: mission.region,
-    //         filter: `healthFacility_Location_Parent_Uuid: "${mission.region.uuid}"`,
-    //     };
-    // }
-    // if (healthFacilities.length) {
-    //     missionFilters.healthFacility = {
-    //         value: healthFacilities,
-    //         filter: `healthFacility_Id_In: ["${healthFacilities.map((hf) => hf.uuid).filter(Boolean).join('", "')}"]`,
-    //     };
-    // }
+
+    // Filtre sur la liste des IDs des healthFacilities
+    if (healthFacilityIds.length) {
+        missionFilters.healthFacility = {
+            value: healthFacilities,
+            filter: `healthFacility_Id_In: ["${healthFacilityIds.join('", "')}"]`,
+        };
+    }
+
     return missionFilters;
 };
 
 const SamplePanel = (props) => {
-    const { classes, edited, onEditedChanged, readOnly, actions, modulesManager, handleShowSampleActions } = props;
+    const { classes, edited, onEditedChanged, readOnly, actions, handleShowSampleActions } = props;
+    const dispatch = useDispatch();
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
+    const modulesManager = useModulesManager();
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
-    const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+    const initialFetchInitiated = useRef(false);
+    const {
+        fetchingClaims,
+        fetchedClaims,
+        errorClaims,
+        items: claims,
+        pageInfo: claimsPageInfo,
+    } = useSelector(
+        (state) => state.medical_controller?.claims ?? {
+            fetchingClaims: false,
+            fetchedClaims: false,
+            errorClaims: null,
+            items: [],
+            pageInfo: { totalCount: 0 },
+        },
+    );
+    const claimsTotals = useSelector((state) => state.medical_controller?.claims?.totals ?? {});
+    const claimsPercentages = useSelector((state) => state.medical_controller?.claims?.percentages ?? {});
+    const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
+
+    useEffect(() => {
+        if (!initialFetchInitiated.current) {
+            const healthFacilities = Array.isArray(edited?.healthFacilities)
+                ? edited.healthFacilities.map((hf) => hf?.healthFacility ?? hf)
+                : edited?.healthFacilities?.edges
+                    ? edited.healthFacilities.edges.map((edge) => edge?.node?.healthFacility ?? edge)
+                    : [];
+            const healthFacilityIds = healthFacilities
+                .map((hf) => hf?.uuid ?? hf?.id)
+                .filter(Boolean);
+
+            if (healthFacilityIds.length > 0 && edited?.percentageOne) {
+                initialFetchInitiated.current = true;
+                const missionFilters = buildMissionFilters(edited);
+                setFilters(missionFilters);
+                dispatch(fetchClaimSample(modulesManager, missionFilters));
+                setShowFilterPanel(true);
+                if (typeof handleShowSampleActions === "function") handleShowSampleActions();
+            }
+        }
+    }, [edited]);
+
+    useEffect(() => {
+        if (claimsPercentages?.category1 !== undefined && claimsPercentages?.category1 !== null && !hasGeneratedSample) {
+            setHasGeneratedSample(true);
+        }
+    }, [claimsPercentages?.category1]);
+
+    const safeNumber = (val) => val != null ? Number(val) : val;
 
     const sample = {
-        ...defaultSample,
-        ...(edited?.sample ?? {}),
+        category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? defaultSample.category1,
+        category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? defaultSample.category2,
+        category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? defaultSample.category3,
+        category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? defaultSample.category4,
     };
 
     const resetSample = () => {
@@ -122,22 +189,53 @@ const SamplePanel = (props) => {
         });
     };
 
-    const handleGenerateSample = () => {
+    const handleGenerateSample = async () => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
-        handleShowSampleActions();
+        setHasGeneratedSample(true)
+        try {
+            if (typeof handleShowSampleActions === "function") handleShowSampleActions();
+        } catch (err) {
+            console.error("handleShowSampleActions error", err);
+        }
+
+        // Extraire les IDs des healthFacilities pour fetchTotalSample
+        const rawHealthFacilities = edited?.healthFacilities;
+        let healthFacilityIds = [];
+        if (rawHealthFacilities) {
+            if (Array.isArray(rawHealthFacilities)) {
+                healthFacilityIds = rawHealthFacilities.map((hf) => hf?.healthFacility?.id ?? hf?.id).filter(Boolean);
+            } else if (rawHealthFacilities.edges) {
+                healthFacilityIds = rawHealthFacilities.edges
+                    .map((edge) => edge?.node?.healthFacility?.id ?? edge?.node?.id)
+                    .filter(Boolean);
+            }
+        }
+
+        // 1er temps : fetchTotalSample pour récupérer les totaux
+        try {
+            await dispatch(fetchTotalSample(
+                modulesManager,
+                healthFacilityIds,
+                {
+                    category1: sample.category1 ?? defaultSample.category1,
+                    category2: sample.category2 ?? defaultSample.category2,
+                    category3: sample.category3 ?? defaultSample.category3,
+                    category4: sample.category4 ?? defaultSample.category4,
+                },
+                edited?.missionCode,
+            ));
+        } catch (err) {
+            console.error("fetchTotalSample error", err);
+        }
+
+        // 2ème temps : fetchClaimSample pour mettre à jour le searcher
+        dispatch(fetchClaimSample(modulesManager, defaultFilters));
 
         if (!showFilterPanel) {
             setShowFilterPanel(true);
-            setHasGeneratedSample(true);
             resetSample();
             return;
-        }
-
-        if (!hasGeneratedSample) {
-            setShowFilterPanel(true);
-            setHasGeneratedSample(true);
-            resetSample();
         }
     };
 
@@ -170,15 +268,17 @@ const SamplePanel = (props) => {
                         </Typography>
                     </Grid>
                     <Grid item className={classes.item} style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            className={classes.actionButton}
-                            startIcon={<PlayArrowIcon />}
-                            onClick={handleGenerateSample}
-                        >
-                            {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
-                        </Button>
+                        {!fetchingClaims && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                className={classes.actionButton}
+                                startIcon={<PlayArrowIcon />}
+                                onClick={handleGenerateSample}
+                            >
+                                {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
+                            </Button>
+                        )}
                     </Grid>
                 </Grid>
 
@@ -191,14 +291,18 @@ const SamplePanel = (props) => {
                                 <Grid item xs={2} className={classes.item} key={key}>
                                     <SelectInput
                                         module={MODULE_NAME}
-                                        label={`MissionSamplePanel.${key}`}
+                                        label={`MissionSample.${key}`}
                                         options={percentageOptions.map((value) => ({ value, label: `${value}%` }))}
                                         value={sample[key] ?? defaultSample[key]}
                                         onChange={(value) => handleChange(key, value)}
+                                        key={`${key}-${hasGeneratedSample ? 'loaded' : 'init'}`}
                                     />
                                     {hasGeneratedSample && (
                                         <Typography variant="body2" style={{ marginTop: 4 }}>
-                                            Total actuel: 0
+                                            {formatMessageWithValues(
+                                                'claimSample.total',
+                                                { totalCategory: claimsTotals?.[`category${index + 1}`] ?? 0 }
+                                            )}
                                         </Typography>
                                     )}
                                 </Grid>
@@ -207,9 +311,8 @@ const SamplePanel = (props) => {
                     </Grid>
                 </Grid>
             </Paper>)}
-
-            {(
-                <Grid className={classes.item}>
+            <Grid className={classes.item}>
+                {hasGeneratedSample && (
                     <PublishedComponent
                         pubRef="claim.ClaimSearcher"
                         modulesManager={modulesManager}
@@ -226,12 +329,24 @@ const SamplePanel = (props) => {
                             />
                         )}
                         edited={edited}
-                        canFetch={true}
-                        onChangeFilters={(newFilters) => setFilters(newFilters)}
+                        canFetch={false}
+                        onChangeFilters={(newFilters) => {
+                            setFilters(newFilters);
+                            dispatch(fetchClaimSample(modulesManager, newFilters));
+                        }}
                         forAudit={true}
+                        fetchingClaims={fetchingClaims}
+                        fetchedClaims={fetchedClaims}
+                        errorClaims={errorClaims}
+                        claims={claims}
+                        claimsPageInfo={claimsPageInfo}
+                        fetchClaimsSample={() => {
+                            dispatch(fetchClaimSample(modulesManager, filters));
+                        }}
                     />
-                </Grid>
-            )}
+                )}
+
+            </Grid>
 
             <Grid className={classes.item}>
                 <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />

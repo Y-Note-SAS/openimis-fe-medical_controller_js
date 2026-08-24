@@ -1,12 +1,35 @@
 import {
   formatMutation,
   formatPageQueryWithCount,
+  formatPageQuery,
   graphql,
   decodeId,
   fetchMutation,
   formatQuery,
 } from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
+
+export function fetchTotalSample(mm, healthFacilityIds, categories, missionCode) {
+  const payload = `
+    query {
+      getClaimsSample(
+        healthFacilityIds: [${healthFacilityIds.map((id) => decodeId(id)).join(", ")}],
+        percentageCategOne: "${categories.category1}",
+        percentageCategTwo: "${categories.category2}",
+        percentageCategThree: "${categories.category3}",
+        percentageCategFour: "${categories.category4}",
+        missionCode: "${missionCode}"
+      ) {
+        categoryOne{ totalCategory }
+        categoryTwo{ totalCategory }
+        categoryThree{ totalCategory }
+        categoryFour{ totalCategory }
+      }
+    }
+  `;
+
+  return graphql(payload, "MEDICAL_CONTROLLER_TOTAL_SAMPLE");
+}
 
 export function fetchMissions(filters) {
   const query = formatPageQueryWithCount(
@@ -38,10 +61,73 @@ export function fetchMission(mm, missionCode) {
     "startDate",
     "endDate",
     "status",
+    "percentageOne",
+    "percentageTwo",
+    "percentageThree",
+    "percentageFour"
   ];
 
   const payload = formatPageQueryWithCount("missions", [`missionCode: "${missionCode}"`], projections);
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
+}
+
+export function fetchClaimSample(mm, missionFilters) {
+  const healthFacilityIds = missionFilters?.healthFacility?.value || [];
+  const missionCode = missionFilters?.missionCode?.value || "";
+  const category = missionFilters?.category?.value;
+
+  const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
+
+  const payload = `
+    query {
+      claimsForHealthFacilities(
+        healthFacilityIds: [${decodedIds}],
+        missionCode: "${missionCode}",
+        ${category !== null ? `category: "${category}"` : ""}
+      ) {
+        totalCateg1
+        totalCateg2
+        totalCateg3
+        totalCateg4
+        percentageCateg1
+        percentageCateg2
+        percentageCateg3
+        percentageCateg4
+        claims {
+          pageInfo {
+            startCursor
+            endCursor
+          }
+          totalCount
+          edges {
+            node{
+              claim {
+                code,
+                healthFacility { id uuid name code }
+                uuid
+                code
+                jsonExt
+                dateTo
+                dateClaimed
+                dateProcessed
+                feedbackStatus
+                reviewStatus
+                claimed
+                approved
+                status
+                restoreId
+                insuree ${mm.getProjection("insuree.InsureePicker.projection")},
+                audited
+                claimCategory
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  return graphql(payload, "MEDICAL_CONTROLLER_CLAIM_SAMPLE");
 }
 
 export function createMission(mission, clientMutationLabel) {

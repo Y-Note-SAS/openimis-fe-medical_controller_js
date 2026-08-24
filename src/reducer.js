@@ -14,6 +14,22 @@ const DEFAULT_STATE = {
     item: null,
     error: null,
   },
+  claimsSample: {
+    isFetching: false,
+    isFetched: false,
+    item: null,
+    totals: { category1: 0, category2: 0, category3: 0, category4: 0 },
+    error: null,
+  },
+  claims: {
+    fetchingClaims: false,
+    fetchedClaims: false,
+    errorClaims: null,
+    items: [],
+    pageInfo: { totalCount: 0 },
+    totals: {},
+    percentages: {}
+  },
   isCreating: false,
   createError: null,
   isUpdating: false,
@@ -89,6 +105,62 @@ const reducer = (state = DEFAULT_STATE, action) => {
       return { ...state, isCreating: false, createError: null };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_ERR":
       return { ...state, isCreating: false, createError: formatServerError(action.payload) };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_REQ":
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: true,
+          fetchedClaims: false,
+          errorClaims: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_RESP":
+      const responseData = action.payload.data?.claimsForHealthFacilities;
+      if (!responseData) {
+        return {
+          ...state,
+          claims: {
+            ...state.claims,
+            fetchingClaims: false,
+            fetchedClaims: true,
+            errorClaims: formatGraphQLError(action.payload),
+          },
+        };
+      }
+      const claimsData = responseData.claims;
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: false,
+          fetchedClaims: true,
+          items: claimsData ? parseData(claimsData).map((item) => item.claim ?? item) : [],
+          pageInfo: claimsData ? pageInfo(claimsData) : { totalCount: 0 },
+          totals: {
+            category1: responseData?.totalCateg1 ?? 0,
+            category2: responseData?.totalCateg2 ?? 0,
+            category3: responseData?.totalCateg3 ?? 0,
+            category4: responseData?.totalCateg4 ?? 0,
+          },
+          percentages: {
+            category1: responseData?.percentageCateg1,
+            category2: responseData?.percentageCateg2,
+            category3: responseData?.percentageCateg3,
+            category4: responseData?.percentageCateg4,
+          },
+          errorClaims: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_ERR":
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: false,
+          errorClaims: formatServerError(action.payload),
+        },
+      };
     case "MEDICAL_CONTROLLER_MISSION_UPDATE_REQ":
       return { ...state, isUpdating: true, updateError: null };
     case "MEDICAL_CONTROLLER_MISSION_UPDATE_RESP":

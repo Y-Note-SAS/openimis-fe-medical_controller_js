@@ -22,10 +22,10 @@ const styles = (theme) => ({
 });
 
 const categoryOptions = [
-    { value: "category1", label: "Catégorie 1" },
-    { value: "category2", label: "Catégorie 2" },
-    { value: "category3", label: "Catégorie 3" },
-    { value: "category4", label: "Catégorie 4" },
+    { value: "1", label: "Catégorie 1" },
+    { value: "2", label: "Catégorie 2" },
+    { value: "3", label: "Catégorie 3" },
+    { value: "4", label: "Catégorie 4" },
 ];
 
 const FilterMissionPanel = (props) => {
@@ -85,9 +85,9 @@ const FilterMissionPanel = (props) => {
                 <SelectInput
                     module={MODULE_NAME}
                     label="MissionFilterPanel.category"
-                    options={categoryOptions}
                     value={filterValue("category")}
                     onChange={(value) => onChangeFilters([categoryFilter(value)])}
+                    options={categoryOptions}
                 />
             </Grid>
         </Grid>
