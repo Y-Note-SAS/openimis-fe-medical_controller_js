@@ -170,3 +170,40 @@ export function createMission(mission, clientMutationLabel) {
   };
 }
 
+export function updateMission(mission, clientMutationLabel) {
+  console.log("mission", mission)
+  const mutationInput = `
+      missionCode: "${mission.missionCode}"
+      status: "C"
+    `;
+
+  let mutation = formatMutation("updateMission", mutationInput, clientMutationLabel);
+  var requestedDateTime = new Date();
+
+  return async (dispatch) => {
+    const response = await dispatch(
+      graphql(
+        mutation.payload,
+        [
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_REQ",
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_RESP",
+          "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR",
+        ],
+        {
+          clientMutationId: mutation.clientMutationId,
+          clientMutationLabel,
+          requestedDateTime,
+        },
+      ),
+    );
+
+    try {
+      dispatch(fetchMutation(mutation.clientMutationId));
+    } catch (err) {
+      console.error("fetchMutation error", err);
+    }
+
+    return response;
+  };
+}
+

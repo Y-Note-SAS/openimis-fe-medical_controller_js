@@ -1,4 +1,7 @@
 {
+  "medical_controller.mainMenu": "Medical Controller",
+  "medical_controller.menu.missions": "Missions",
+  "medical_controller.missions.page.title": "Medical Controller Missions",
   "missions.page.title": "Missions",
   "missions.details.title": "Mission details",
   "missions.details.missionHeader": "Mission information",
@@ -19,4 +22,3 @@
   "missions.status.open": "Open",
   "missions.status.closed": "Closed"
 }
-

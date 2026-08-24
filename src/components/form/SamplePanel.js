@@ -14,7 +14,7 @@ import {
     useTranslations,
     useModulesManager,
 } from "@openimis/fe-core";
-import { MISSION_CATEGORIES, MODULE_NAME } from "../../constants";
+import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED } from "../../constants";
 import { fetchTotalSample, fetchClaimSample } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
@@ -260,7 +260,7 @@ const SamplePanel = (props) => {
 
     return (
         <Fragment>
-            <Paper className={classes.paper}>
+            {!!edited && edited.status != MISSION_STATUS_CLOSED && (<Paper className={classes.paper}>
                 <Grid container className={classes.tableTitle}>
                     <Grid item className={classes.paperHeader}>
                         <Typography variant="h6">
@@ -310,7 +310,7 @@ const SamplePanel = (props) => {
                         })}
                     </Grid>
                 </Grid>
-            </Paper>
+            </Paper>)}
             <Grid className={classes.item}>
                 {hasGeneratedSample && (
                     <PublishedComponent
@@ -348,11 +348,10 @@ const SamplePanel = (props) => {
 
             </Grid>
 
-            {hasGeneratedSample && (
-                <Grid className={classes.item}>
-                    <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
-                </Grid>
-            )}
+            <Grid className={classes.item}>
+                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
+            </Grid>
+
         </Fragment>
     );
 };

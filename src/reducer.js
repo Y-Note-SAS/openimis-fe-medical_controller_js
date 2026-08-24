@@ -32,6 +32,8 @@ const DEFAULT_STATE = {
   },
   isCreating: false,
   createError: null,
+  isUpdating: false,
+  updateError: null,
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -159,6 +161,12 @@ const reducer = (state = DEFAULT_STATE, action) => {
           errorClaims: formatServerError(action.payload),
         },
       };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_REQ":
+      return { ...state, isUpdating: true, updateError: null };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_RESP":
+      return { ...state, isUpdating: false, updateError: null };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR":
+      return { ...state, isUpdating: false, updateError: formatServerError(action.payload) };
     default:
       return state;
   }
