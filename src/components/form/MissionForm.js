@@ -114,6 +114,7 @@ const MissionForm = (props) => {
               Panels={[SamplePanel]}
               back={onBack}
               actions={actions}
+              modulesManager={modulesManager}
               handleShowSampleActions={handleShowSampleActions}
             />
           </Fragment>
