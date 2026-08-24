@@ -268,17 +268,16 @@ const SamplePanel = (props) => {
                         </Typography>
                     </Grid>
                     <Grid item className={classes.item} style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-                        {!fetchingClaims && (
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                className={classes.actionButton}
-                                startIcon={<PlayArrowIcon />}
-                                onClick={handleGenerateSample}
-                            >
-                                {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
-                            </Button>
-                        )}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            className={classes.actionButton}
+                            startIcon={<PlayArrowIcon />}
+                            disabled={fetchingClaims}
+                            onClick={handleGenerateSample}
+                        >
+                            {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
+                        </Button>
                     </Grid>
                 </Grid>
 
