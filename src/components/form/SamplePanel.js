@@ -102,6 +102,7 @@ const SamplePanel = (props) => {
     const [filters, setFilters] = useState({});
     const modulesManager = useModulesManager();
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
+    const [isGeneratingSample, setIsGeneratingSample] = useState(false);
     const initialFetchInitiated = useRef(false);
     const {
         fetchingClaims,
@@ -190,6 +191,7 @@ const SamplePanel = (props) => {
     };
 
     const handleGenerateSample = async () => {
+        setIsGeneratingSample(true);
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
         setHasGeneratedSample(true)
@@ -235,8 +237,8 @@ const SamplePanel = (props) => {
         if (!showFilterPanel) {
             setShowFilterPanel(true);
             resetSample();
-            return;
         }
+        setIsGeneratingSample(false);
     };
 
     const handleDownloadMission = () => {
@@ -273,7 +275,7 @@ const SamplePanel = (props) => {
                             color="primary"
                             className={classes.actionButton}
                             startIcon={<PlayArrowIcon />}
-                            disabled={fetchingClaims}
+                            disabled={isGeneratingSample || fetchingClaims}
                             onClick={handleGenerateSample}
                         >
                             {hasGeneratedSample ? formatMessage("MissionSamplePanel.addSample") : formatMessage("MissionSamplePanel.getSample")}
