@@ -10,7 +10,8 @@ import {
   combine,
   ErrorBoundary,
   useTranslations,
-  coreConfirm
+  coreConfirm,
+  baseApiUrl
 } from "@openimis/fe-core";
 import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@material-ui/core";
 import GetAppIcon from "@material-ui/icons/GetApp";
@@ -91,7 +92,7 @@ const MissionForm = (props) => {
             color="primary"
             style={{ display: showSampleActions ? "inline-flex" : "none" }}
             startIcon={<GetAppIcon />}
-            onClick={() => (props.onDownloadMission ? props.onDownloadMission(mission) : console.log("Download mission", mission))}
+            onClick={() => window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank')}
           >
             {formatMessage("missionForm.download")}
           </Button>

@@ -170,6 +170,30 @@ export function createMission(mission, clientMutationLabel) {
   };
 }
 
+export function fetchMissionHistory(mm, missionCode) {
+  const payload = `
+    query {
+      missionActivityHistory(missionCode: "${missionCode}") {
+        totalCount
+        edges {
+          node {
+            action
+            actionDate
+            user {
+              username
+            }
+          }
+        }
+      }
+    }
+  `;
+  return graphql(payload, [
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_REQ",
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_RESP",
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_ERR",
+  ]);
+}
+
 export function updateMission(mission, clientMutationLabel) {
   console.log("mission", mission)
   const mutationInput = `

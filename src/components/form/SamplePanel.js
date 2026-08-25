@@ -254,12 +254,6 @@ const SamplePanel = (props) => {
 
     const categories = ["Categorie 1", "Categorie 2", "Categorie 3", "Categorie 4"];
 
-    const historyActions = [
-        { date: "2026-08-01", time: "09:30", controller: "Dr. Jean Dupont", action: "Création de mission" },
-        { date: "2026-08-02", time: "11:15", controller: "Dr. Marie Curie", action: "Validation" },
-        { date: "2026-08-05", time: "14:45", controller: "Dr. Paul Martin", action: "Clôture" },
-    ];
-
     return (
         <Fragment>
             {!!edited && edited.status != MISSION_STATUS_CLOSED && (<Paper className={classes.paper}>
@@ -350,7 +344,7 @@ const SamplePanel = (props) => {
             </Grid>
 
             <Grid className={classes.item}>
-                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} historyActions={historyActions} />
+                <MissionHistoryPanel classes={classes} modulesManager={modulesManager} missionCode={edited?.missionCode} />
             </Grid>
 
         </Fragment>
