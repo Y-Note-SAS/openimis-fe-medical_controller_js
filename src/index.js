@@ -1,5 +1,6 @@
 import MedicalControllerMainMenu from "./menus/MedicalControllerMainMenu";
 import MedicalControllerPicker from "./pickers/MedicalControllerPicker";
+import MissionCategoryPicker from "./pickers/MissionCategoryPicker";
 import MissionsPage from "./pages/MissionsPage";
 import MissionPage from "./pages/MissionPage";
 import messages_en from "./translations/en.json";
@@ -17,6 +18,7 @@ const DEFAULT_CONFIG = {
       key: "medical_controller.MedicalControllerPicker.projection",
       ref: ["id", "uuid", "code", "lastName", "otherNames"],
     },
+    { key: "medical_controller.MissionCategoryPicker", ref: MissionCategoryPicker },
   ],
   "core.Router": [
     { path: ROUTE_MEDICAL_CONTROLLER_MISSIONS, component: MissionsPage },

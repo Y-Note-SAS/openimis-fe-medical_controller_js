@@ -30,6 +30,13 @@ const DEFAULT_STATE = {
     totals: {},
     percentages: {}
   },
+  missionHistory: {
+    fetchingHistory: false,
+    fetchedHistory: false,
+    errorHistory: null,
+    items: [],
+    pageInfo: { totalCount: 0 },
+  },
   isCreating: false,
   createError: null,
   isUpdating: false,
@@ -167,6 +174,38 @@ const reducer = (state = DEFAULT_STATE, action) => {
       return { ...state, isUpdating: false, updateError: null };
     case "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR":
       return { ...state, isUpdating: false, updateError: formatServerError(action.payload) };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_REQ":
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: true,
+          fetchedHistory: false,
+          errorHistory: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_RESP":
+      const historyData = action.payload.data?.missionActivityHistory;
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: false,
+          fetchedHistory: true,
+          items: historyData?.edges?.map((edge) => edge?.node) ?? [],
+          pageInfo: { totalCount: historyData?.totalCount ?? 0 },
+          errorHistory: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_ERR":
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: false,
+          errorHistory: formatServerError(action.payload),
+        },
+      };
     default:
       return state;
   }

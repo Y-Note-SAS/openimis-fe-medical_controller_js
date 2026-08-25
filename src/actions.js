@@ -83,7 +83,7 @@ export function fetchClaimSample(mm, missionFilters) {
       claimsForHealthFacilities(
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}",
-        ${category !== null ? `category: "${category}"` : ""}
+        ${category != null ? `category: "${category}"` : ""}
       ) {
         totalCateg1
         totalCateg2
@@ -168,6 +168,30 @@ export function createMission(mission, clientMutationLabel) {
 
     return response;
   };
+}
+
+export function fetchMissionHistory(mm, missionCode) {
+  const payload = `
+    query {
+      missionActivityHistory(missionCode: "${missionCode}") {
+        totalCount
+        edges {
+          node {
+            action
+            actionDate
+            user {
+              username
+            }
+          }
+        }
+      }
+    }
+  `;
+  return graphql(payload, [
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_REQ",
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_RESP",
+    "MEDICAL_CONTROLLER_MISSION_HISTORY_ERR",
+  ]);
 }
 
 export function updateMission(mission, clientMutationLabel) {

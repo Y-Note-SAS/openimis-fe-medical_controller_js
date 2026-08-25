@@ -1,7 +1,7 @@
 import React from "react";
 import { Grid, Divider, Paper, Typography } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { combine, FormattedMessage, PublishedComponent, SelectInput } from "@openimis/fe-core";
+import { combine, FormattedMessage, PublishedComponent } from "@openimis/fe-core";
 import { MODULE_NAME } from "../../constants";
 
 const styles = (theme) => ({
@@ -20,13 +20,6 @@ const styles = (theme) => ({
         marginTop: theme.spacing(2),
     },
 });
-
-const categoryOptions = [
-    { value: "1", label: "Catégorie 1" },
-    { value: "2", label: "Catégorie 2" },
-    { value: "3", label: "Catégorie 3" },
-    { value: "4", label: "Catégorie 4" },
-];
 
 const FilterMissionPanel = (props) => {
     const { classes, filters = {}, modulesManager, edited, onChangeFilters = () => { } } = props;
@@ -60,11 +53,11 @@ const FilterMissionPanel = (props) => {
     const filterValue = (key) => filters?.[key]?.value ?? null;
     const healthFacilitiesValue = filterValue("healthFacility") ?? defaultMissionHealthFacilities;
 
-    const categoryFilter = (value) => ({
+    const categoryFilter = (value) => value !== null ? {
         id: "category",
         value,
-        filter: value ? value : null,
-    });
+        filter: `${value}`,
+    } : { id:"category", value };
 
     return (
         <Grid container className={classes.item} spacing={2}>
@@ -82,12 +75,12 @@ const FilterMissionPanel = (props) => {
             </Grid>
 
             <Grid item xs={4} md={2} className={classes.item}>
-                <SelectInput
-                    module={MODULE_NAME}
+                <PublishedComponent
+                    pubRef="medical_controller.MissionCategoryPicker"
+                    withLabel
                     label="MissionFilterPanel.category"
                     value={filterValue("category")}
-                    onChange={(value) => onChangeFilters([categoryFilter(value)])}
-                    options={categoryOptions}
+                    onChange={(value) => onChangeFilters([categoryFilter(value)].filter(Boolean))}
                 />
             </Grid>
         </Grid>
