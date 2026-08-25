@@ -83,7 +83,7 @@ export function fetchClaimSample(mm, missionFilters) {
       claimsForHealthFacilities(
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}",
-        ${category !== null ? `category: "${category}"` : ""}
+        ${category != null ? `category: "${category}"` : ""}
       ) {
         totalCateg1
         totalCateg2

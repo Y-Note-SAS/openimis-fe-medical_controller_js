@@ -14,7 +14,7 @@ import {
     useTranslations,
     useModulesManager,
 } from "@openimis/fe-core";
-import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED } from "../../constants";
+import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE } from "../../constants";
 import { fetchTotalSample, fetchClaimSample } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
@@ -43,14 +43,6 @@ const styles = (theme) => ({
         },
     },
 });
-
-const percentageOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
-const defaultSample = {
-    category1: 10,
-    category2: 30,
-    category3: 100,
-    category4: 100,
-};
 
 const buildMissionFilters = (mission = {}) => {
     const _rawHealthFacilities = mission?.healthFacilities;
@@ -154,10 +146,10 @@ const SamplePanel = (props) => {
     const safeNumber = (val) => val != null ? Number(val) : val;
 
     const sample = {
-        category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? defaultSample.category1,
-        category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? defaultSample.category2,
-        category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? defaultSample.category3,
-        category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? defaultSample.category4,
+        category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
+        category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
+        category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
+        category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
     };
 
     const resetSample = () => {
@@ -165,7 +157,7 @@ const SamplePanel = (props) => {
             return;
         }
 
-        const resetValues = Object.keys(defaultSample).reduce((acc, key) => ({
+        const resetValues = Object.keys(DEFAULT_SAMPLE).reduce((acc, key) => ({
             ...acc,
             [key]: 0,
         }), {});
@@ -220,10 +212,10 @@ const SamplePanel = (props) => {
                 modulesManager,
                 healthFacilityIds,
                 {
-                    category1: sample.category1 ?? defaultSample.category1,
-                    category2: sample.category2 ?? defaultSample.category2,
-                    category3: sample.category3 ?? defaultSample.category3,
-                    category4: sample.category4 ?? defaultSample.category4,
+                    category1: sample.category1 ?? DEFAULT_SAMPLE.category1,
+                    category2: sample.category2 ?? DEFAULT_SAMPLE.category2,
+                    category3: sample.category3 ?? DEFAULT_SAMPLE.category3,
+                    category4: sample.category4 ?? DEFAULT_SAMPLE.category4,
                 },
                 edited?.missionCode,
             ));
@@ -287,8 +279,8 @@ const SamplePanel = (props) => {
                                     <SelectInput
                                         module={MODULE_NAME}
                                         label={`MissionSample.${key}`}
-                                        options={percentageOptions.map((value) => ({ value, label: `${value}%` }))}
-                                        value={sample[key] ?? defaultSample[key]}
+                                        options={PERCENTAGE_OPTIONS.map((value) => ({ value, label: `${value}%` }))}
+                                        value={sample[key] ?? DEFAULT_SAMPLE[key]}
                                         onChange={(value) => handleChange(key, value)}
                                         key={`${key}-${hasGeneratedSample ? 'loaded' : 'init'}`}
                                     />

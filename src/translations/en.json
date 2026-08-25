@@ -20,5 +20,10 @@
   "missions.details.back": "Retour",
   "missions.details.notFound": "Mission non trouvée.",
   "missions.status.open": "Open",
-  "missions.status.closed": "Closed"
+  "missions.status.closed": "Closed",
+  "medical_controller.missionSample.category.null": "All Categories",
+  "medical_controller.missionSample.category.1": "Category 1",
+  "medical_controller.missionSample.category.2": "Category 2",
+  "medical_controller.missionSample.category.3": "Category 3",
+  "medical_controller.missionSample.category.4": "Category 4"
 }
