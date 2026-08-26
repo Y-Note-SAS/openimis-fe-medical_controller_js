@@ -117,7 +117,7 @@ export function fetchClaimSample(mm, missionFilters) {
                 status
                 restoreId
                 insuree ${mm.getProjection("insuree.InsureePicker.projection")},
-                audited
+                amountAudited
                 claimCategory
               }
             }
