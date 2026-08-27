@@ -119,6 +119,7 @@ export function fetchClaimSample(mm, missionFilters) {
                 insuree ${mm.getProjection("insuree.InsureePicker.projection")},
                 amountAudited
                 claimCategory
+                audited
               }
             }
           }
