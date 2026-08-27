@@ -13,6 +13,7 @@ import {
     SelectInput,
     useTranslations,
     useModulesManager,
+    useHistory,
 } from "@openimis/fe-core";
 import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE } from "../../constants";
 import { fetchTotalSample, fetchClaimSample } from "../../actions";
@@ -90,6 +91,7 @@ const buildMissionFilters = (mission = {}) => {
 const SamplePanel = (props) => {
     const { classes, edited, onEditedChanged, readOnly, actions, handleShowSampleActions } = props;
     const dispatch = useDispatch();
+    const history = useHistory();
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const modulesManager = useModulesManager();
@@ -246,6 +248,16 @@ const SamplePanel = (props) => {
 
     const categories = ["Categorie 1", "Categorie 2", "Categorie 3", "Categorie 4"];
 
+    const onClaimDoubleClick = (claim, newTab = false) => {
+        const pathname = `/${modulesManager.getRef("claim.route.claimEdit")}/${claim.uuid}`;
+        const search = `?forAudit=true&mission_code=${edited?.missionCode ?? ""}`;
+        if (newTab) {
+            window.open(`${pathname}${search}`, "_blank");
+        } else {
+            history.push({ pathname, search });
+        }
+    };
+
     return (
         <Fragment>
             {!!edited && edited.status != MISSION_STATUS_CLOSED && (<Paper className={classes.paper}>
@@ -306,7 +318,7 @@ const SamplePanel = (props) => {
                         defaultFilters={filters}
                         cacheFiltersKey="medicalControllerMissionSampleClaims"
                         actions={[]}
-                        onDoubleClick={null}
+                        onDoubleClick={onClaimDoubleClick}
                         filterPane={(searcherProps) => (
                             <FilterMissionPanel
                                 {...searcherProps}
