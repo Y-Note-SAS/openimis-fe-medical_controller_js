@@ -26,7 +26,6 @@ const DEFAULT_CONFIG = {
   ],
   "core.MainMenu": [MedicalControllerMainMenu],
 };
-
 export const MedicalControllerModule = (cfg) => {
   return { ...DEFAULT_CONFIG, ...cfg };
 };
