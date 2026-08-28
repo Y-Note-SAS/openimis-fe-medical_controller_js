@@ -147,12 +147,16 @@ const SamplePanel = (props) => {
 
     const safeNumber = (val) => val != null ? Number(val) : val;
 
-    const sample = {
-        category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
-        category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
-        category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
-        category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
-    };
+    // Si la mission n'a pas de pourcentages définis, utiliser les valeurs par défaut
+    const hasMissionPercentages = !!edited?.percentageOne;
+    const sample = hasMissionPercentages
+        ? {
+            category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
+            category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
+            category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
+            category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
+        }
+        : { ...DEFAULT_SAMPLE };
 
     const resetSample = () => {
         if (!onEditedChanged) {
@@ -250,8 +254,6 @@ const SamplePanel = (props) => {
         setShowFilterPanel(false);
     };
 
-    const categories = ["Categorie 1", "Categorie 2", "Categorie 3", "Categorie 4"];
-
     const onClaimDoubleClick = (claim, newTab = false) => {
         const pathname = `/${modulesManager.getRef("claim.route.claimEdit")}/${claim.uuid}`;
         const search = `?forAudit=true&mission_code=${edited?.missionCode ?? ""}`;
@@ -288,8 +290,8 @@ const SamplePanel = (props) => {
                 <Divider />
                 <Grid container className={classes.item}>
                     <Grid container direction="row" spacing={2}>
-                        {categories.map((label, index) => {
-                            const key = `category${index + 1}`;
+                        {MISSION_CATEGORIES.map((label, index) => {
+                            const key = `category${label}`;
                             return (
                                 <Grid item xs={2} className={classes.item} key={key}>
                                     <SelectInput
