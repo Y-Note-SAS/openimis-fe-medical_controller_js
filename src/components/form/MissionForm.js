@@ -46,6 +46,11 @@ const MissionForm = (props) => {
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const actions = [];
 
+  // Réinitialiser la mission quand le mission_code change
+  useEffect(() => {
+    setMission({});
+  }, [mission_code]);
+
   useEffect(() => {
     if (isFetched && fetchedMission) {
       setMission((prev) => {

@@ -95,7 +95,7 @@ const SamplePanel = (props) => {
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const modulesManager = useModulesManager();
-    const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
+    const hasGeneratedSample = !!edited.percentageOne;
     const [isGeneratingSample, setIsGeneratingSample] = useState(false);
     const initialFetchInitiated = useRef(false);
     const {
@@ -118,7 +118,7 @@ const SamplePanel = (props) => {
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
     useEffect(() => {
-        if (!initialFetchInitiated.current) {
+        if (!!edited.missionCode && hasGeneratedSample) {
             const healthFacilities = Array.isArray(edited?.healthFacilities)
                 ? edited.healthFacilities.map((hf) => hf?.healthFacility ?? hf)
                 : edited?.healthFacilities?.edges
@@ -128,8 +128,7 @@ const SamplePanel = (props) => {
                 .map((hf) => hf?.uuid ?? hf?.id)
                 .filter(Boolean);
 
-            if (healthFacilityIds.length > 0 && edited?.percentageOne) {
-                initialFetchInitiated.current = true;
+            if (healthFacilityIds.length > 0) {
                 const missionFilters = buildMissionFilters(edited);
                 setFilters(missionFilters);
                 dispatch(fetchClaimSample(modulesManager, missionFilters));
@@ -137,13 +136,7 @@ const SamplePanel = (props) => {
                 if (typeof handleShowSampleActions === "function") handleShowSampleActions();
             }
         }
-    }, [edited]);
-
-    useEffect(() => {
-        if (claimsPercentages?.category1 !== undefined && claimsPercentages?.category1 !== null && !hasGeneratedSample) {
-            setHasGeneratedSample(true);
-        }
-    }, [claimsPercentages?.category1]);
+    }, [edited?.missionCode, hasGeneratedSample]);
 
     const safeNumber = (val) => val != null ? Number(val) : val;
 
@@ -237,7 +230,6 @@ const SamplePanel = (props) => {
 
     const handleDownloadMission = () => {
         if (props.onDownloadMission) return props.onDownloadMission(edited);
-        console.log("Download mission", edited);
     };
 
     const handleCloseMission = () => {
@@ -311,18 +303,17 @@ const SamplePanel = (props) => {
                 </Grid>
             </Paper>)}
             <Grid className={classes.item}>
-                {hasGeneratedSample && (
+                <ProgressOrError progress={fetchingClaims} error={errorClaims} />
+                {hasGeneratedSample && fetchedClaims && (
                     <PublishedComponent
                         pubRef="claim.ClaimSearcher"
                         modulesManager={modulesManager}
                         defaultFilters={filters}
-                        cacheFiltersKey="medicalControllerMissionSampleClaims"
                         actions={[]}
                         onDoubleClick={onClaimDoubleClick}
                         filterPane={(searcherProps) => (
                             <FilterMissionPanel
                                 {...searcherProps}
-                                edited={edited}
                                 modulesManager={modulesManager}
                                 onChangeFilters={searcherProps.onChangeFilters}
                             />
