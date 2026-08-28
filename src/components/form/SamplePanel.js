@@ -344,8 +344,8 @@ const SamplePanel = (props) => {
                         errorClaims={errorClaims}
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
-                        fetchClaimsSample={(queryParams) => {
-                            dispatch(fetchClaimSample(modulesManager, filters, queryParams));
+                        fetchClaimsSample={() => {
+                            dispatch(fetchClaimSample(modulesManager, filters));
                         }}
                     />
                 )}
