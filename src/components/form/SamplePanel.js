@@ -46,7 +46,6 @@ const styles = (theme) => ({
 });
 
 const buildMissionFilters = (mission = {}) => {
-    console.log("mission", mission)
     const _rawHealthFacilities = mission?.healthFacilities;
     if (!mission?.healthFacilities && !mission?.region && !mission?.district) {
         return {};
