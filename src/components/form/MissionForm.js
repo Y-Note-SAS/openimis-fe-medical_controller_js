@@ -52,15 +52,10 @@ const MissionForm = (props) => {
   }, [mission_code]);
 
   useEffect(() => {
-    if (isFetched && fetchedMission) {
-      setMission((prev) => {
-        // if (prev?.id === fetchedMission?.id && prev?.missionCode === fetchedMission?.missionCode) {
-        //   return prev;
-        // }
-        return fetchedMission;
-      });
+    if (isFetched && fetchedMission && fetchedMission.missionCode === mission_code) {
+      setMission(fetchedMission);
     }
-  }, [isFetched, fetchedMission]);
+  }, [isFetched, fetchedMission, mission_code]);
 
   const handleEditedChanged = (newMission) => {
     setMission(newMission);

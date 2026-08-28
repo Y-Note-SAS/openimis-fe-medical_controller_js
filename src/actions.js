@@ -72,12 +72,17 @@ export function fetchMission(mm, missionCode) {
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
 }
 
-export function fetchClaimSample(mm, missionFilters) {
+export function fetchClaimSample(mm, missionFilters, queryParams) {
   const healthFacilityIds = missionFilters?.healthFacility?.value || [];
   const missionCode = missionFilters?.missionCode?.value || "";
   const category = missionFilters?.category?.value;
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
+
+  // Extraire les paramètres de pagination passés par le Searcher (même logique que filtersToQueryParams)
+  const paginationParams = (queryParams || [])
+    .filter((p) => /^(first|last|after|before):/.test(p))
+    .join(", ");
 
   const payload = `
     query {
@@ -85,6 +90,7 @@ export function fetchClaimSample(mm, missionFilters) {
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}",
         ${category != null ? `category: "${category}"` : ""}
+        ${paginationParams ? `, ${paginationParams}` : ""}
       ) {
         totalCateg1
         totalCateg2
