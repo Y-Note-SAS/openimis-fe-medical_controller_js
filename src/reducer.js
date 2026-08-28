@@ -111,6 +111,42 @@ const reducer = (state = DEFAULT_STATE, action) => {
           error: formatServerError(action.payload),
         },
       };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_REQ":
+      return {
+        ...state,
+        claimsSample: {
+          ...state.claimsSample,
+          isFetching: true,
+          isFetched: false,
+          error: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_RESP":
+      const sampleData = action.payload.data?.getClaimsSample;
+      return {
+        ...state,
+        claimsSample: {
+          isFetching: false,
+          isFetched: true,
+          item: sampleData ?? null,
+          totals: {
+            category1: sampleData?.categoryOne?.totalCategory ?? 0,
+            category2: sampleData?.categoryTwo?.totalCategory ?? 0,
+            category3: sampleData?.categoryThree?.totalCategory ?? 0,
+            category4: sampleData?.categoryFour?.totalCategory ?? 0,
+          },
+          error: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_ERR":
+      return {
+        ...state,
+        claimsSample: {
+          ...state.claimsSample,
+          isFetching: false,
+          error: formatServerError(action.payload),
+        },
+      };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_REQ":
       return { ...state, isCreating: true, createError: null };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_RESP":
