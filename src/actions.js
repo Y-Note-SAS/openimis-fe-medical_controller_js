@@ -203,7 +203,6 @@ export function fetchMissionHistory(mm, missionCode) {
 }
 
 export function updateMission(mission, clientMutationLabel) {
-  console.log("mission", mission)
   const mutationInput = `
       missionCode: "${mission.missionCode}"
       status: "C"
