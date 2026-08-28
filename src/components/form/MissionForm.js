@@ -83,7 +83,7 @@ const MissionForm = (props) => {
     setShowCloseDialog(false);
   };
 
-  if (!!mission.percentageOne) {
+  if (!!mission && !!mission.percentageOne) {
     actions.push(
       {
         button: (
