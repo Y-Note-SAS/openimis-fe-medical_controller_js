@@ -31,6 +31,19 @@ export function fetchTotalSample(mm, healthFacilityIds, categories, missionCode)
   return graphql(payload, "MEDICAL_CONTROLLER_TOTAL_SAMPLE");
 }
 
+export function checkMissionAvailability(districtId, startDate, endDate) {
+  const payload = `
+    query {
+      checkMissionAvailability(
+        districtId: ${districtId},
+        startDate: "${startDate}",
+        endDate: "${endDate}"
+      )
+    }
+  `;
+  return graphql(payload, "MEDICAL_CONTROLLER_MISSION_AVAILABILITY");
+}
+
 export function fetchMissions(filters) {
   const query = formatPageQueryWithCount(
     "missions",

@@ -37,6 +37,11 @@ const DEFAULT_STATE = {
     items: [],
     pageInfo: { totalCount: 0 },
   },
+  missionAvailability: {
+    isChecking: false,
+    available: null,
+    error: null,
+  },
   isCreating: false,
   createError: null,
   isUpdating: false,
@@ -208,6 +213,33 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.missionHistory,
           fetchingHistory: false,
           errorHistory: formatServerError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_REQ":
+      return {
+        ...state,
+        missionAvailability: {
+          ...state.missionAvailability,
+          isChecking: true,
+          error: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_RESP":
+      return {
+        ...state,
+        missionAvailability: {
+          isChecking: false,
+          available: action.payload?.data?.checkMissionAvailability,
+          error: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_ERR":
+      return {
+        ...state,
+        missionAvailability: {
+          ...state.missionAvailability,
+          isChecking: false,
+          error: formatServerError(action.payload),
         },
       };
     default:

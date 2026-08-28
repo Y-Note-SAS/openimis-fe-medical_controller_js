@@ -83,7 +83,7 @@ const MissionForm = (props) => {
     setShowCloseDialog(false);
   };
 
-  if (!!mission && mission?.status != MISSION_STATUS_CLOSED) {
+  if (!!mission.percentageOne) {
     actions.push(
       {
         button: (
@@ -97,7 +97,12 @@ const MissionForm = (props) => {
             {formatMessage("missionForm.download")}
           </Button>
         ),
-      },
+      }
+    )
+  }
+
+  if (!!mission && mission?.status != MISSION_STATUS_CLOSED) {
+    actions.push(
       {
         button: (
           <Button

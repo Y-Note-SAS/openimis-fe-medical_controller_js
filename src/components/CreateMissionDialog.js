@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { injectIntl } from "react-intl";
 import {
@@ -23,8 +23,9 @@ import {
   MonthPicker,
   YearPicker,
   journalize,
+  decodeId,
 } from "@openimis/fe-core";
-import { createMission } from "../actions";
+import { createMission, checkMissionAvailability } from "../actions";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -88,6 +89,14 @@ const CreateMissionDialog = (props) => {
 
   const [mission, setMission] = useState(EMPTY_STATE);
   const [errors, setErrors] = useState({});
+  const districtRef = useRef(null);
+
+  // Remonter jusqu'au champ district quand une erreur y est affichée
+  useEffect(() => {
+    if (errors.district && districtRef.current) {
+      districtRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [errors.district]);
 
   const updateField = (field, value) => {
     setMission((prev) => ({ ...prev, [field]: value }));
@@ -112,6 +121,9 @@ const CreateMissionDialog = (props) => {
       district: value,
       healthFacilities: !!value ? mission.healthFacilities : [],
     }));
+    if (errors.district) {
+      setErrors((prev) => ({ ...prev, district: null }));
+    }
   };
 
   const onChangeHealthFacilities = (value) => {
@@ -132,6 +144,28 @@ const CreateMissionDialog = (props) => {
   };
 
   const save = async () => {
+    const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
+    const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
+
+    // Vérifier l'unicité de la mission pour ce district sur cette période
+    try {
+      const availabilityResponse = await props.checkMissionAvailability(
+        decodeId(mission.district.id),
+        startDate,
+        endDate,
+      );
+      const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
+      if (available === false) {
+        setErrors((prev) => ({
+          ...prev,
+          district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
+        }));
+        return;
+      }
+    } catch (err) {
+      console.error("checkMissionAvailability error", err);
+    }
+
     try {
       const response = await props.createMission(
         mission,
@@ -198,7 +232,7 @@ const CreateMissionDialog = (props) => {
             />
           </Grid>
 
-          <Grid item xs={12} className={classes.fieldItem}>
+          <Grid item xs={12} className={classes.fieldItem} ref={districtRef}>
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={1}
@@ -209,6 +243,11 @@ const CreateMissionDialog = (props) => {
               required
               parentLocation={mission.region}
             />
+            {errors.district && (
+              <Typography color="error" variant="body2" style={{ marginTop: 4 }}>
+                {errors.district}
+              </Typography>
+            )}
           </Grid>
 
           <Grid item xs={12} className={classes.fieldItem}>
@@ -315,7 +354,7 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission, journalize }, dispatch);
+const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission, journalize, checkMissionAvailability }, dispatch);
 
 const enhance = combine(withModulesManager, withStyles(styles), connect(null, mapDispatchToProps));
 
