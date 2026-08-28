@@ -124,6 +124,21 @@ const reducer = (state = DEFAULT_STATE, action) => {
       };
     case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_RESP":
       const responseData = action.payload.data?.claimsForHealthFacilities;
+      if (!responseData) {
+        return {
+          ...state,
+          claims: {
+            ...state.claims,
+            fetchingClaims: false,
+            fetchedClaims: true,
+            items: [],
+            pageInfo: { totalCount: 0 },
+            totals: {},
+            percentages: {},
+            errorClaims: formatGraphQLError(action.payload),
+          },
+        };
+      }
       const claimsData = responseData.claims;
       return {
         ...state,

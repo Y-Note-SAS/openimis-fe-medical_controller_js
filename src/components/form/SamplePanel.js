@@ -129,7 +129,8 @@ const SamplePanel = (props) => {
                 .map((hf) => hf?.uuid ?? hf?.id)
                 .filter(Boolean);
 
-            if (healthFacilityIds.length > 0) {
+            if (healthFacilityIds.length > 0 && !initialFetchInitiated.current) {
+                initialFetchInitiated.current = true;
                 const missionFilters = buildMissionFilters(edited);
                 setFilters(missionFilters);
                 dispatch(fetchClaimSample(modulesManager, missionFilters));
@@ -138,6 +139,11 @@ const SamplePanel = (props) => {
             }
         }
     }, [edited?.missionCode, hasGeneratedSample]);
+
+    // Réinitialiser le garde quand la mission change
+    useEffect(() => {
+        initialFetchInitiated.current = false;
+    }, [edited?.missionCode]);
 
     const safeNumber = (val) => val != null ? Number(val) : val;
 
@@ -336,8 +342,8 @@ const SamplePanel = (props) => {
                         errorClaims={errorClaims}
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
-                        fetchClaimsSample={() => {
-                            dispatch(fetchClaimSample(modulesManager, filters));
+                        fetchClaimsSample={(queryParams) => {
+                            dispatch(fetchClaimSample(modulesManager, filters, queryParams));
                         }}
                     />
                 )}
