@@ -107,7 +107,7 @@ export function fetchClaimSample(mm, missionFilters) {
         percentageCateg2
         percentageCateg3
         percentageCateg4
-        claims {
+        claims (first: 10) {
           pageInfo {
             hasNextPage
             hasPreviousPage
