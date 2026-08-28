@@ -30,5 +30,8 @@
   "createMission.cancel": "Cancel",
   "createMission.submit": "Submit",
   "createMission.startDate": "Start date",
-  "createMission.endDate": "End date"
+  "createMission.endDate": "End date",
+  "medical_controller.missionForm.confirmClose.title": "",
+  "medical_controller.missionForm.confirmClose.message": "",
+  "closeMission.mutationLabel": ""
 }

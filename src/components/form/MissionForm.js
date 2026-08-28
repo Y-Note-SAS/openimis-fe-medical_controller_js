@@ -10,7 +10,6 @@ import {
   combine,
   ErrorBoundary,
   useTranslations,
-  coreConfirm,
   baseApiUrl
 } from "@openimis/fe-core";
 import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@material-ui/core";
@@ -89,9 +88,12 @@ const MissionForm = (props) => {
         <Button
           variant="contained"
           color="primary"
-          style={{ display: showSampleActions ? "inline-flex" : "none" }}
+          style={{ display: showSampleActions && !!mission?.missionCode ? "inline-flex" : "none" }}
           startIcon={<GetAppIcon />}
-          onClick={() => window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank')}
+          onClick={() => {
+            if (!mission?.missionCode) return;
+            window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank');
+          }}
         >
           {formatMessage("missionForm.download")}
         </Button>

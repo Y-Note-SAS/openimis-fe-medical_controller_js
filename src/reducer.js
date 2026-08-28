@@ -135,7 +135,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
             category3: sampleData?.categoryThree?.totalCategory ?? 0,
             category4: sampleData?.categoryFour?.totalCategory ?? 0,
           },
-          error: formatGraphQLError(action.payload),
+          // N'attribuer une erreur que si les données sont absentes
+          error: !sampleData ? formatGraphQLError(action.payload) : null,
         },
       };
     case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_ERR":

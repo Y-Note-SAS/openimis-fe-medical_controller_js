@@ -144,6 +144,9 @@ const CreateMissionDialog = (props) => {
   };
 
   const save = async () => {
+    // Garde de sécurité : vérifier que le district existe avant de continuer
+    if (!mission.district) return;
+
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
 
