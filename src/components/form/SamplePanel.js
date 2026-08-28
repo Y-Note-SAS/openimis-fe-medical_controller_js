@@ -16,7 +16,7 @@ import {
     useHistory,
 } from "@openimis/fe-core";
 import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE } from "../../constants";
-import { fetchTotalSample, fetchClaimSample } from "../../actions";
+import { fetchTotalSample, fetchClaimSample, fetchMissionHistory } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
 
@@ -181,7 +181,6 @@ const SamplePanel = (props) => {
         setIsGeneratingSample(true);
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
-        setHasGeneratedSample(true)
         try {
             if (typeof handleShowSampleActions === "function") handleShowSampleActions();
         } catch (err) {
@@ -221,6 +220,11 @@ const SamplePanel = (props) => {
         // 2ème temps : fetchClaimSample pour mettre à jour le searcher
         dispatch(fetchClaimSample(modulesManager, defaultFilters));
 
+        // Rafraîchir l'historique de la mission
+        if (edited?.missionCode) {
+            dispatch(fetchMissionHistory(modulesManager, edited.missionCode));
+        }
+
         if (!showFilterPanel) {
             setShowFilterPanel(true);
             resetSample();
@@ -234,7 +238,6 @@ const SamplePanel = (props) => {
 
     const handleCloseMission = () => {
         if (props.onCloseMission) props.onCloseMission(edited);
-        setHasGeneratedSample(false);
         setShowFilterPanel(false);
     };
 
