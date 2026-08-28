@@ -95,7 +95,7 @@ const SamplePanel = (props) => {
     const [showFilterPanel, setShowFilterPanel] = useState(false);
     const [filters, setFilters] = useState({});
     const modulesManager = useModulesManager();
-    const hasGeneratedSample = !!edited.percentageOne;
+    const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
     const [isGeneratingSample, setIsGeneratingSample] = useState(false);
     const initialFetchInitiated = useRef(false);
     const {
@@ -118,7 +118,8 @@ const SamplePanel = (props) => {
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
     useEffect(() => {
-        if (!!edited.missionCode && hasGeneratedSample) {
+        if (!!edited.missionCode && !!edited.percentageOne) {
+            setHasGeneratedSample(true);
             const healthFacilities = Array.isArray(edited?.healthFacilities)
                 ? edited.healthFacilities.map((hf) => hf?.healthFacility ?? hf)
                 : edited?.healthFacilities?.edges
@@ -181,6 +182,7 @@ const SamplePanel = (props) => {
         setIsGeneratingSample(true);
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
+        setHasGeneratedSample(true)
         try {
             if (typeof handleShowSampleActions === "function") handleShowSampleActions();
         } catch (err) {
@@ -238,6 +240,7 @@ const SamplePanel = (props) => {
 
     const handleCloseMission = () => {
         if (props.onCloseMission) props.onCloseMission(edited);
+        setHasGeneratedSample(false);
         setShowFilterPanel(false);
     };
 
