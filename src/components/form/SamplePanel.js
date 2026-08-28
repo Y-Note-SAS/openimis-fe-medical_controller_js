@@ -58,7 +58,7 @@ const buildMissionFilters = (mission = {}) => {
             : [];
 
     const healthFacilityIds = healthFacilities
-        .map((hf) => hf?.uuid ?? hf?.id)
+        .map((hf) => hf?.id)
         .filter(Boolean);
 
     const missionFilters = {};
@@ -119,6 +119,9 @@ const SamplePanel = (props) => {
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
     useEffect(() => {
+        // Réinitialiser le garde à chaque changement de mission (avant le fetch)
+        initialFetchInitiated.current = false;
+
         if (!!edited.missionCode && !!edited.percentageOne) {
             setHasGeneratedSample(true);
             const healthFacilities = Array.isArray(edited?.healthFacilities)
@@ -127,7 +130,7 @@ const SamplePanel = (props) => {
                     ? edited.healthFacilities.edges.map((edge) => edge?.node?.healthFacility ?? edge)
                     : [];
             const healthFacilityIds = healthFacilities
-                .map((hf) => hf?.uuid ?? hf?.id)
+                .map((hf) => hf?.id)
                 .filter(Boolean);
 
             if (healthFacilityIds.length > 0 && !initialFetchInitiated.current) {
@@ -138,17 +141,12 @@ const SamplePanel = (props) => {
                 if (typeof handleShowSampleActions === "function") handleShowSampleActions();
             }
         }
-    }, [edited?.missionCode, hasGeneratedSample]);
-
-    // Réinitialiser le garde quand la mission change
-    useEffect(() => {
-        initialFetchInitiated.current = false;
     }, [edited?.missionCode]);
 
     const safeNumber = (val) => val != null ? Number(val) : val;
 
     // Si la mission n'a pas de pourcentages définis, utiliser les valeurs par défaut
-    const hasMissionPercentages = !!edited?.percentageOne;
+    const hasMissionPercentages = edited?.percentageOne != null;
     const sample = hasMissionPercentages
         ? {
             category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
