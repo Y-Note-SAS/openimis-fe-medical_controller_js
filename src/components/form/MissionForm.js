@@ -83,40 +83,33 @@ const MissionForm = (props) => {
     setShowCloseDialog(false);
   };
 
-  if (!!mission && !!mission.percentageOne) {
-    actions.push(
-      {
-        button: (
-          <Button
-            variant="contained"
-            color="primary"
-            style={{ display: showSampleActions ? "inline-flex" : "none" }}
-            startIcon={<GetAppIcon />}
-            onClick={() => window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank')}
-          >
-            {formatMessage("missionForm.download")}
-          </Button>
-        ),
-      }
-    )
-  }
-
-  if (!!mission && mission?.status != MISSION_STATUS_CLOSED) {
-    actions.push(
-      {
-        button: (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<StopIcon />}
-            style={{ display: showSampleActions ? "inline-flex" : "none" }}
-            onClick={handleOpenCloseDialog}
-          >
-            {formatMessage("missionForm.close")}
-          </Button>
-        ),
-      })
-  }
+  actions.push(
+    {
+      button: (
+        <Button
+          variant="contained"
+          color="primary"
+          style={{ display: showSampleActions ? "inline-flex" : "none" }}
+          startIcon={<GetAppIcon />}
+          onClick={() => window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank')}
+        >
+          {formatMessage("missionForm.download")}
+        </Button>
+      ),
+    },
+    {
+      button: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<StopIcon />}
+          style={{ display: showSampleActions && (!!mission && mission?.status != MISSION_STATUS_CLOSED) ? "inline-flex" : "none" }}
+          onClick={handleOpenCloseDialog}
+        >
+          {formatMessage("missionForm.close")}
+        </Button>
+      ),
+    })
 
   return (
     <div className={clsx(classes.page, readOnly && classes.locked)}>
