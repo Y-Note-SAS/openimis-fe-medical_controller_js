@@ -44,6 +44,7 @@ export function fetchMissions(filters) {
       "startDate",
       "endDate",
       "status",
+      "dateCreated"
     ],
   );
 
