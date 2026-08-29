@@ -33,12 +33,14 @@ const MissionsPage = (props) => {
   };
 
   useEffect(() => {
-    if (redirectToLatest && missions.items?.length > 0) {
+    // Ne naviguer que lorsque le fetch est terminé avec des données fraîches,
+    // sinon missions.items[0] peut encore être l'avant-dernière mission.
+    if (redirectToLatest && !missions.isFetching && missions.isFetched && missions.items?.length > 0) {
       const latestMission = missions.items[0];
       setRedirectToLatest(false);
       historyPush(modulesManager, history, "medical_controller.route.mission", [latestMission.missionCode]);
     }
-  }, [redirectToLatest, missions.items]);
+  }, [redirectToLatest, missions.isFetching, missions.isFetched, missions.items]);
 
   const onDoubleClick = (mission, newTab = false) => {
     historyPush(modulesManager, history, "medical_controller.route.mission", [mission.missionCode], newTab);
