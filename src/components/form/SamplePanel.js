@@ -96,7 +96,7 @@ const SamplePanel = (props) => {
     const modulesManager = useModulesManager();
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
     const [isGeneratingSample, setIsGeneratingSample] = useState(false);
-    const initialFetchInitiated = useRef(false);
+    const lastProcessedSignature = useRef(null);
     const {
         fetchingClaims,
         fetchedClaims,
@@ -118,30 +118,32 @@ const SamplePanel = (props) => {
     const sampleError = useSelector((state) => state.medical_controller?.claimsSample?.error ?? null);
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
+    // Dériver les champs de la mission qui conditionnent l'échantillon
+    const missionCode = edited?.missionCode;
+    const healthFacilities = Array.isArray(edited?.healthFacilities)
+        ? edited.healthFacilities.map((hf) => hf?.healthFacility ?? hf)
+        : edited?.healthFacilities?.edges
+            ? edited.healthFacilities.edges.map((edge) => edge?.node?.healthFacility ?? edge)
+            : [];
+    const healthFacilityIds = healthFacilities
+        .map((hf) => hf?.id)
+        .filter(Boolean);
+    // Signature stable : rejoue l'effet si le code ou les établissements changent
+    const missionSignature = `${missionCode ?? ""}|${healthFacilityIds.join(",")}`;
+
     useEffect(() => {
-        // Réinitialiser le garde à chaque changement de mission (avant le fetch)
-        initialFetchInitiated.current = false;
-
-        if (!!edited.missionCode && !!edited.percentageOne) {
+        if (!!missionCode && !!edited.percentageOne) {
             setHasGeneratedSample(true);
-            const healthFacilities = Array.isArray(edited?.healthFacilities)
-                ? edited.healthFacilities.map((hf) => hf?.healthFacility ?? hf)
-                : edited?.healthFacilities?.edges
-                    ? edited.healthFacilities.edges.map((edge) => edge?.node?.healthFacility ?? edge)
-                    : [];
-            const healthFacilityIds = healthFacilities
-                .map((hf) => hf?.id)
-                .filter(Boolean);
 
-            if (healthFacilityIds.length > 0 && !initialFetchInitiated.current) {
-                initialFetchInitiated.current = true;
+            if (healthFacilityIds.length > 0 && lastProcessedSignature.current !== missionSignature) {
+                lastProcessedSignature.current = missionSignature;
                 const missionFilters = buildMissionFilters(edited);
                 setFilters(missionFilters);
                 dispatch(fetchClaimSample(modulesManager, missionFilters));
                 if (typeof handleShowSampleActions === "function") handleShowSampleActions();
             }
         }
-    }, [edited?.missionCode]);
+    }, [missionCode, missionSignature, edited.percentageOne, healthFacilityIds.length, handleShowSampleActions]);
 
     const safeNumber = (val) => val != null ? Number(val) : val;
 
