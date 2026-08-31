@@ -157,6 +157,16 @@ const CreateMissionDialog = (props) => {
         startDate,
         endDate,
       );
+
+      // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
+      if (!availabilityResponse || availabilityResponse.error) {
+        setErrors((prev) => ({
+          ...prev,
+          district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
+        }));
+        return;
+      }
+
       const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
       if (available === false) {
         setErrors((prev) => ({
@@ -167,6 +177,11 @@ const CreateMissionDialog = (props) => {
       }
     } catch (err) {
       console.error("checkMissionAvailability error", err);
+      setErrors((prev) => ({
+        ...prev,
+        district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
+      }));
+      return;
     }
 
     try {

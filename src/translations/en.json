@@ -31,6 +31,8 @@
   "createMission.submit": "Submit",
   "createMission.startDate": "Start date",
   "createMission.endDate": "End date",
+  "createMission.missionExist": "Mission already exists for this district on this period",
+  "createMission.availabilityError": "Unable to verify mission availability. Please try again.",
   "medical_controller.missionForm.confirmClose.title": "",
   "medical_controller.missionForm.confirmClose.message": "",
   "closeMission.mutationLabel": ""

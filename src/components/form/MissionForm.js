@@ -74,12 +74,19 @@ const MissionForm = (props) => {
       updateMission(
         { ...mission, status: "C" },
         formatMessageWithValues("closeMission.mutationLabel", { code: mission.missionCode, })
-      )).then(() => {
-        if (mission.missionCode) {
-          dispatch(fetchMission(modulesManager, mission.missionCode));
-        }
-      });
-    setShowCloseDialog(false);
+      )
+    ).then((response) => {
+      // Si la mutation a échoué, on ne ferme pas le dialogue et on ne refetch pas
+      if (response?.error) {
+        // coreAlert est déjà dispatché par graphql, le dialogue reste ouvert
+        return;
+      }
+      // Succès : fermer le dialogue et rafraîchir la mission
+      setShowCloseDialog(false);
+      if (mission.missionCode) {
+        dispatch(fetchMission(modulesManager, mission.missionCode));
+      }
+    });
   };
 
   actions.push(
@@ -105,7 +112,7 @@ const MissionForm = (props) => {
           variant="contained"
           color="primary"
           startIcon={<StopIcon />}
-          style={{ display: showSampleActions && (!!mission && mission?.status != MISSION_STATUS_CLOSED) ? "inline-flex" : "none" }}
+          style={{ display: showSampleActions && !!mission?.missionCode && mission?.status != MISSION_STATUS_CLOSED ? "inline-flex" : "none" }}
           onClick={handleOpenCloseDialog}
         >
           {formatMessage("missionForm.close")}
