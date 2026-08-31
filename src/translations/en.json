@@ -35,5 +35,7 @@
   "createMission.availabilityError": "Unable to verify mission availability. Please try again.",
   "medical_controller.missionForm.confirmClose.title": "",
   "medical_controller.missionForm.confirmClose.message": "",
-  "closeMission.mutationLabel": ""
+  "closeMission.mutationLabel": "",
+  "auditReport.dateFrom": "Date from",
+  "auditReport.dateTo": "Date to"
 }
