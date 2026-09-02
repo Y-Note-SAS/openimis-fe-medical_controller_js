@@ -119,7 +119,6 @@ const SamplePanel = (props) => {
     const claimsTotals = useSelector((state) => state.medical_controller?.claims?.totals ?? {});
     const claimsPercentages = useSelector((state) => state.medical_controller?.claims?.percentages ?? {});
     const isFetchingSample = useSelector((state) => state.medical_controller?.claimsSample?.isFetching ?? false);
-    const isFetchedSample = useSelector((state) => state.medical_controller?.claimsSample?.isFetched ?? false);
     const sampleError = useSelector((state) => state.medical_controller?.claimsSample?.error ?? null);
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
