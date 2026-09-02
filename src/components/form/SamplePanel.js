@@ -96,6 +96,10 @@ const SamplePanel = (props) => {
     const modulesManager = useModulesManager();
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
     const [isGeneratingSample, setIsGeneratingSample] = useState(false);
+    // Clé utilisée pour remonter le ClaimSearcher et réinitialiser ses filtres internes
+    const [sampleGenKey, setSampleGenKey] = useState(0);
+    // Valeurs locales des pourcentages (permettent de garder les choix de l'utilisateur)
+    const [sampleValues, setSampleValues] = useState({ category1: 0, category2: 0, category3: 0, category4: 0 });
     const lastProcessedSignature = useRef(null);
     const {
         fetchingClaims,
@@ -149,14 +153,19 @@ const SamplePanel = (props) => {
 
     // Si la mission n'a pas de pourcentages définis, utiliser les valeurs par défaut
     const hasMissionPercentages = edited?.percentageOne != null;
-    const sample = hasMissionPercentages
-        ? {
-            category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
-            category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
-            category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
-            category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
-        }
-        : { ...DEFAULT_SAMPLE };
+
+    // Si un échantillonnage a été généré, les pourcentages partent de 0
+    // (valeur stockée dans sampleValues pour permettre à l'utilisateur de les modifier)
+    const sample = hasGeneratedSample
+        ? sampleValues
+        : hasMissionPercentages
+            ? {
+                category1: edited?.sample?.category1 ?? safeNumber(claimsPercentages?.category1) ?? DEFAULT_SAMPLE.category1,
+                category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
+                category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
+                category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
+            }
+            : { ...DEFAULT_SAMPLE };
 
     const resetSample = () => {
         if (!onEditedChanged) {
@@ -175,6 +184,11 @@ const SamplePanel = (props) => {
     };
 
     const handleChange = (key, value) => {
+        if (hasGeneratedSample) {
+            // Conserver le choix de l'utilisateur dans l'état local
+            setSampleValues((prev) => ({ ...prev, [key]: value }));
+            return;
+        }
         if (!onEditedChanged) {
             return;
         }
@@ -193,6 +207,8 @@ const SamplePanel = (props) => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
         setHasGeneratedSample(true)
+        setSampleGenKey((key) => key + 1);
+        setSampleValues({ category1: 0, category2: 0, category3: 0, category4: 0 });
         try {
             if (typeof handleShowSampleActions === "function") handleShowSampleActions();
         } catch (err) {
@@ -310,18 +326,20 @@ const SamplePanel = (props) => {
                 </Grid>
             </Paper>)}
             <Grid className={classes.item}>
-                <ProgressOrError progress={fetchingClaims || isFetchingSample} error={errorClaims || sampleError} />
-                {hasGeneratedSample && fetchedClaims && (
+                <ProgressOrError progress={isFetchingSample} error={errorClaims || sampleError} />
+                {hasGeneratedSample && (
                     <PublishedComponent
+                        key={`claimSearcher-${sampleGenKey}`}
                         pubRef="claim.ClaimSearcher"
                         modulesManager={modulesManager}
-                        defaultFilters={filters}
+                        defaultFilters={buildMissionFilters(edited)}
                         actions={[]}
                         onDoubleClick={onClaimDoubleClick}
                         filterPane={(searcherProps) => (
                             <FilterMissionPanel
                                 {...searcherProps}
                                 modulesManager={modulesManager}
+                                edited={edited}
                                 onChangeFilters={searcherProps.onChangeFilters}
                             />
                         )}
@@ -337,8 +355,8 @@ const SamplePanel = (props) => {
                         errorClaims={errorClaims}
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
-                        fetchClaimsSample={() => {
-                            dispatch(fetchClaimSample(modulesManager, filters));
+                        fetchClaimsSample={(prms) => {
+                            dispatch(fetchClaimSample(modulesManager, buildMissionFilters(edited)));
                         }}
                     />
                 )}

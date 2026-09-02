@@ -65,8 +65,7 @@ const FilterMissionPanel = (props) => {
                 <PublishedComponent
                     pubRef="location.HealthFacilityPicker"
                     value={healthFacilitiesValue}
-                    district={edited?.district}
-                    region={edited?.region}
+                    options={defaultMissionHealthFacilities}
                     multiple
                     autoComplete
                     withNull
