@@ -96,6 +96,8 @@ const SamplePanel = (props) => {
     const modulesManager = useModulesManager();
     const [hasGeneratedSample, setHasGeneratedSample] = useState(false);
     const [isGeneratingSample, setIsGeneratingSample] = useState(false);
+    // Clé utilisée pour remonter le ClaimSearcher et réinitialiser ses filtres internes
+    const [sampleGenKey, setSampleGenKey] = useState(0);
     const lastProcessedSignature = useRef(null);
     const {
         fetchingClaims,
@@ -115,6 +117,7 @@ const SamplePanel = (props) => {
     const claimsTotals = useSelector((state) => state.medical_controller?.claims?.totals ?? {});
     const claimsPercentages = useSelector((state) => state.medical_controller?.claims?.percentages ?? {});
     const isFetchingSample = useSelector((state) => state.medical_controller?.claimsSample?.isFetching ?? false);
+    const isFetchedSample = useSelector((state) => state.medical_controller?.claimsSample?.isFetched ?? false);
     const sampleError = useSelector((state) => state.medical_controller?.claimsSample?.error ?? null);
     const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
@@ -193,6 +196,7 @@ const SamplePanel = (props) => {
         const defaultFilters = buildMissionFilters(edited);
         setFilters(defaultFilters);
         setHasGeneratedSample(true)
+        setSampleGenKey((key) => key + 1);
         try {
             if (typeof handleShowSampleActions === "function") handleShowSampleActions();
         } catch (err) {
@@ -310,18 +314,20 @@ const SamplePanel = (props) => {
                 </Grid>
             </Paper>)}
             <Grid className={classes.item}>
-                <ProgressOrError progress={fetchingClaims || isFetchingSample} error={errorClaims || sampleError} />
-                {hasGeneratedSample && fetchedClaims && (
+                <ProgressOrError progress={isFetchingSample} error={errorClaims || sampleError} />
+                {hasGeneratedSample && (
                     <PublishedComponent
+                        key={`claimSearcher-${sampleGenKey}`}
                         pubRef="claim.ClaimSearcher"
                         modulesManager={modulesManager}
-                        defaultFilters={filters}
+                        defaultFilters={buildMissionFilters(edited)}
                         actions={[]}
                         onDoubleClick={onClaimDoubleClick}
                         filterPane={(searcherProps) => (
                             <FilterMissionPanel
                                 {...searcherProps}
                                 modulesManager={modulesManager}
+                                edited={edited}
                                 onChangeFilters={searcherProps.onChangeFilters}
                             />
                         )}
@@ -337,8 +343,8 @@ const SamplePanel = (props) => {
                         errorClaims={errorClaims}
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
-                        fetchClaimsSample={() => {
-                            dispatch(fetchClaimSample(modulesManager, filters));
+                        fetchClaimsSample={(prms) => {
+                            dispatch(fetchClaimSample(modulesManager, buildMissionFilters(edited)));
                         }}
                     />
                 )}
