@@ -1,5 +1,4 @@
 import React, { Fragment } from "react";
-import { connect, useDispatch } from "react-redux";
 
 import { Grid, FormLabel, Button } from "@material-ui/core";
 import { withTheme, withStyles } from "@material-ui/core/styles";
@@ -51,7 +50,6 @@ const MainPanel = (props) => {
     displayedHealthFacilities = [];
   }
 
-  const dispatch = useDispatch();
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
 

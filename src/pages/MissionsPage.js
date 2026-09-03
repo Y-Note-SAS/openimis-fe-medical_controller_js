@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Add as AddIcon } from "@material-ui/icons";
 import { Fab, Typography } from "@material-ui/core";
@@ -22,14 +22,25 @@ const MissionsPage = (props) => {
   const missions = useSelector((state) => state.medical_controller?.missions ?? {});
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [redirectToLatest, setRedirectToLatest] = useState(false);
+  const history = useHistory();
 
   if (!rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
-  const history = useHistory();
-
-  const handleMissionCreated = () => {
-    dispatch(fetchMissions([]));
+  const handleMissionCreated = async () => {
+    await dispatch(fetchMissions([`orderBy: "-dateCreated"`]));
+    setRedirectToLatest(true);
   };
+
+  useEffect(() => {
+    // Ne naviguer que lorsque le fetch est terminé avec des données fraîches,
+    // sinon missions.items[0] peut encore être l'avant-dernière mission.
+    if (redirectToLatest && !missions.isFetching && missions.isFetched && missions.items?.length > 0) {
+      const latestMission = missions.items[0];
+      setRedirectToLatest(false);
+      historyPush(modulesManager, history, "medical_controller.route.mission", [latestMission.missionCode]);
+    }
+  }, [redirectToLatest, missions.isFetching, missions.isFetched, missions.items]);
 
   const onDoubleClick = (mission, newTab = false) => {
     historyPush(modulesManager, history, "medical_controller.route.mission", [mission.missionCode], newTab);
