@@ -14,6 +14,7 @@ import {
     useTranslations,
     useModulesManager,
     useHistory,
+    historyPush
 } from "@openimis/fe-core";
 import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE } from "../../constants";
 import { fetchTotalSample, fetchClaimSample, fetchMissionHistory } from "../../actions";
@@ -264,13 +265,15 @@ const SamplePanel = (props) => {
     };
 
     const onClaimDoubleClick = (claim, newTab = false) => {
-        const pathname = `/${modulesManager.getRef("claim.route.claimEdit")}/${claim.uuid}`;
-        const search = `?forAudit=true&mission_code=${edited?.missionCode ?? ""}`;
-        if (newTab) {
-            window.open(`${pathname}${search}`, "_blank");
-        } else {
-            history.push({ pathname, search });
-        }
+        historyPush(
+            modulesManager,
+            history,
+            "medical_controller.route.claimAudit",
+            [edited?.missionCode ?? "", claim.uuid],
+            newTab,
+            "",
+            { mission: edited },
+        );
     };
 
     return (
