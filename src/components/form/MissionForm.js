@@ -9,22 +9,23 @@ import {
   ProgressOrError,
   combine,
   ErrorBoundary,
-  useTranslations
+  useTranslations,
+  baseApiUrl
 } from "@openimis/fe-core";
-import { Button, Typography } from "@material-ui/core";
+import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@material-ui/core";
 import GetAppIcon from "@material-ui/icons/GetApp";
 import StopIcon from "@material-ui/icons/Stop";
 import MainPanel from "./MainPanel";
 import SamplePanel from "./SamplePanel";
-import { fetchMission } from "../../actions";
-import { MODULE_NAME } from "../../constants";
+import { fetchMission, updateMission } from "../../actions";
+import { MISSION_STATUS_CLOSED, MODULE_NAME } from "../../constants";
 
 const styles = (theme) => ({
   page: theme.page,
 });
 
 const MissionForm = (props) => {
-  const { readOnly, onBack, modulesManager, mission_code, onChange, classes } =
+  const { intl, readOnly, onBack, modulesManager, mission_code, onChange, classes } =
     props;
   const dispatch = useDispatch();
 
@@ -40,19 +41,20 @@ const MissionForm = (props) => {
   const error = useSelector((state) => state.medical_controller?.mission?.error ?? null);
   const [mission, setMission] = useState({});
   const [showSampleActions, setShowSampleActions] = useState(false);
-  const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const actions = [];
 
+  // Réinitialiser la mission quand le mission_code change
   useEffect(() => {
-    if (isFetched && fetchedMission) {
-      setMission((prev) => {
-        if (prev?.id === fetchedMission?.id && prev?.missionCode === fetchedMission?.missionCode) {
-          return prev;
-        }
-        return fetchedMission;
-      });
+    setMission({});
+  }, [mission_code]);
+
+  useEffect(() => {
+    if (isFetched && fetchedMission && fetchedMission.missionCode === mission_code) {
+      setMission(fetchedMission);
     }
-  }, [isFetched, fetchedMission]);
+  }, [isFetched, fetchedMission, mission_code]);
 
   const handleEditedChanged = (newMission) => {
     setMission(newMission);
@@ -65,15 +67,40 @@ const MissionForm = (props) => {
     setShowSampleActions(true);
   }
 
+  const handleOpenCloseDialog = () => setShowCloseDialog(true);
+  const handleCloseCloseDialog = () => setShowCloseDialog(false);
+  const handleConfirmClose = () => {
+    dispatch(
+      updateMission(
+        { ...mission, status: "C" },
+        formatMessageWithValues("closeMission.mutationLabel", { code: mission.missionCode, })
+      )
+    ).then((response) => {
+      // Si la mutation a échoué, on ne ferme pas le dialogue et on ne refetch pas
+      if (response?.error) {
+        // coreAlert est déjà dispatché par graphql, le dialogue reste ouvert
+        return;
+      }
+      // Succès : fermer le dialogue et rafraîchir la mission
+      setShowCloseDialog(false);
+      if (mission.missionCode) {
+        dispatch(fetchMission(modulesManager, mission.missionCode));
+      }
+    });
+  };
+
   actions.push(
     {
       button: (
         <Button
           variant="contained"
           color="primary"
-          style={{ display: showSampleActions ? "inline-flex" : "none" }}
+          style={{ display: showSampleActions && !!mission?.missionCode ? "inline-flex" : "none" }}
           startIcon={<GetAppIcon />}
-          onClick={() => (props.onDownloadMission ? props.onDownloadMission(mission) : console.log("Download mission", mission))}
+          onClick={() => {
+            if (!mission?.missionCode) return;
+            window.open(`${window.location.origin}${baseApiUrl}/medical_controller/registers/download_mission/${mission.missionCode}/`, '_blank');
+          }}
         >
           {formatMessage("missionForm.download")}
         </Button>
@@ -85,16 +112,13 @@ const MissionForm = (props) => {
           variant="contained"
           color="primary"
           startIcon={<StopIcon />}
-          style={{ display: showSampleActions ? "inline-flex" : "none" }}
-          onClick={() => {
-            if (props.onCloseMission) props.onCloseMission(mission);
-          }}
+          style={{ display: showSampleActions && !!mission?.missionCode && mission?.status != MISSION_STATUS_CLOSED ? "inline-flex" : "none" }}
+          onClick={handleOpenCloseDialog}
         >
           {formatMessage("missionForm.close")}
         </Button>
       ),
-    },
-  );
+    })
 
   return (
     <div className={clsx(classes.page, readOnly && classes.locked)}>
@@ -114,8 +138,29 @@ const MissionForm = (props) => {
               Panels={[SamplePanel]}
               back={onBack}
               actions={actions}
+              modulesManager={modulesManager}
               handleShowSampleActions={handleShowSampleActions}
             />
+            <Dialog
+              open={showCloseDialog}
+              onClose={handleCloseCloseDialog}
+              aria-labelledby="confirm-close-title"
+            >
+              <DialogTitle id="confirm-close-title">{formatMessage("medical_controller.missionForm.confirmClose.title")}</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  {formatMessage("medical_controller.missionForm.confirmClose.message")}
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseCloseDialog} color="primary">
+                  {formatMessage("cancel")}
+                </Button>
+                <Button onClick={handleConfirmClose} color="primary" autoFocus>
+                  {formatMessage("ok")}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Fragment>
         )}
       </ErrorBoundary>

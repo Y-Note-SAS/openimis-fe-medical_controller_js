@@ -67,7 +67,7 @@ const MissionsFilter = (props) => {
   const controllerFilter = (value) => ({
     id: "medicalController",
     value,
-    filter: value ? `user_Id: "${value.id}"` : null,
+    filter: value ? `user_Username: "${value.username}"` : null,
   });
   const statusFilter = (value) => ({
     id: "status",
