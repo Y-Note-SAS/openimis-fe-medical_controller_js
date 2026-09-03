@@ -38,7 +38,7 @@ class ClaimAuditPage extends Component {
 
   render() {
     const { classes, modulesManager, history, rights, claim_uuid, mission, mission_code } = this.props;
-    if (!rights.includes(RIGHT_LOAD, RIGHT_MEDICAL_CONTROLLER)) return null;
+    if (!rights.includes(RIGHT_LOAD) || !rights.includes(RIGHT_MEDICAL_CONTROLLER)) return null;
 
     return (
       <div className={classes.page}>
@@ -59,7 +59,6 @@ const mapStateToProps = (state, props) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
   claim_uuid: props.match.params.claim_uuid,
   mission_code: props.match.params.mission_code,
-  mission_status: props.match.params.mission_status,
   mission: props.location?.state?.mission
     ?? (state.medical_controller?.mission?.item?.missionCode === props.match.params.mission_code
       ? state.medical_controller.mission.item
