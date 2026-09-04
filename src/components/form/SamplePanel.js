@@ -359,7 +359,12 @@ const SamplePanel = (props) => {
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
                         fetchClaimsSample={(prms) => {
-                            dispatch(fetchClaimSample(modulesManager, buildMissionFilters(edited)));
+                            dispatch(fetchClaimSample(
+                                modulesManager,
+                                buildMissionFilters(edited),
+                                claimsPageInfo,
+                                prms,
+                            ));
                         }}
                     />
                 )}
