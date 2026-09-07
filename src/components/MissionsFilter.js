@@ -200,7 +200,13 @@ const MissionsFilter = (props) => {
               value={filterValue("district")}
               region={filterValue("region")}
               withNull
-              onChange={(value) => onChangeFilters([districtFilter(value)])}
+              onChange={(value) => {
+                const updates = [districtFilter(value)];
+                if (value && value.parent) {
+                  updates.push(regionFilter(value.parent));
+                }
+                onChangeFilters(updates);
+              }}
               label={formatMessage("medical_controller.missions.district")}
               parentLocation={filterValue("region")}
             />
