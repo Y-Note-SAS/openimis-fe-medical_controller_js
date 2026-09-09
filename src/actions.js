@@ -85,10 +85,20 @@ export function fetchMission(mm, missionCode) {
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION");
 }
 
-export function fetchClaimSample(mm, missionFilters) {
+export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, paginationParams = []) {
   const healthFacilityIds = missionFilters?.healthFacility?.value || [];
   const missionCode = missionFilters?.missionCode?.value || "";
   const category = missionFilters?.category?.value;
+  const isNextPage = paginationParams.some((param) => param.startsWith("after:"));
+  const isPreviousPage = paginationParams.some((param) => param.startsWith("before:"));
+
+  // Le Searcher indique la direction dans paginationParams. Les curseurs utilisés
+  // restent ceux de la page actuellement affichée dans le store.
+  const claimsPagination = isNextPage && claimsPageInfo.endCursor
+    ? `first: 10, after: "${claimsPageInfo.endCursor}"`
+    : isPreviousPage && claimsPageInfo.startCursor
+      ? `last: 10, before: "${claimsPageInfo.startCursor}"`
+      : "first: 10";
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
@@ -107,7 +117,7 @@ export function fetchClaimSample(mm, missionFilters) {
         percentageCateg2
         percentageCateg3
         percentageCateg4
-        claims (first: 10) {
+        claims (${claimsPagination}) {
           pageInfo {
             hasNextPage
             hasPreviousPage
@@ -246,4 +256,3 @@ export function updateMission(mission, clientMutationLabel) {
     return response;
   };
 }
-
