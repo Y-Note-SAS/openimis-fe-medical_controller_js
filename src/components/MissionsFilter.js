@@ -67,7 +67,7 @@ const MissionsFilter = (props) => {
   const controllerFilter = (value) => ({
     id: "medicalController",
     value,
-    filter: value ? `user_Id: "${value.id}"` : null,
+    filter: value ? `user_Username: "${value.username}"` : null,
   });
   const statusFilter = (value) => ({
     id: "status",
@@ -200,7 +200,13 @@ const MissionsFilter = (props) => {
               value={filterValue("district")}
               region={filterValue("region")}
               withNull
-              onChange={(value) => onChangeFilters([districtFilter(value)])}
+              onChange={(value) => {
+                const updates = [districtFilter(value)];
+                if (value && value.parent) {
+                  updates.push(regionFilter(value.parent));
+                }
+                onChangeFilters(updates);
+              }}
               label={formatMessage("medical_controller.missions.district")}
               parentLocation={filterValue("region")}
             />

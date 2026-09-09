@@ -43,6 +43,8 @@ const MissionsSearcher = (props) => {
       .filter((key) => state.filters[key].filter)
       .map((key) => state.filters[key].filter);
 
+    params.push(`orderBy: "-dateCreated"`);
+
     if (!state.beforeCursor && !state.afterCursor) {
       params.push(`first: ${state.pageSize}`);
     }

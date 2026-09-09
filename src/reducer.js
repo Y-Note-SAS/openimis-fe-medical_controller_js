@@ -14,8 +14,38 @@ const DEFAULT_STATE = {
     item: null,
     error: null,
   },
+  claimsSample: {
+    isFetching: false,
+    isFetched: false,
+    item: null,
+    totals: { category1: 0, category2: 0, category3: 0, category4: 0 },
+    error: null,
+  },
+  claims: {
+    fetchingClaims: false,
+    fetchedClaims: false,
+    errorClaims: null,
+    items: [],
+    pageInfo: { totalCount: 0 },
+    totals: {},
+    percentages: {}
+  },
+  missionHistory: {
+    fetchingHistory: false,
+    fetchedHistory: false,
+    errorHistory: null,
+    items: [],
+    pageInfo: { totalCount: 0 },
+  },
+  missionAvailability: {
+    isChecking: false,
+    available: null,
+    error: null,
+  },
   isCreating: false,
   createError: null,
+  isUpdating: false,
+  updateError: null,
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -81,12 +111,174 @@ const reducer = (state = DEFAULT_STATE, action) => {
           error: formatServerError(action.payload),
         },
       };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_REQ":
+      return {
+        ...state,
+        claimsSample: {
+          ...state.claimsSample,
+          isFetching: true,
+          isFetched: false,
+          error: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_RESP":
+      const sampleData = action.payload.data?.getClaimsSample;
+      return {
+        ...state,
+        claimsSample: {
+          isFetching: false,
+          isFetched: true,
+          item: sampleData ?? null,
+          totals: {
+            category1: sampleData?.categoryOne?.totalCategory ?? 0,
+            category2: sampleData?.categoryTwo?.totalCategory ?? 0,
+            category3: sampleData?.categoryThree?.totalCategory ?? 0,
+            category4: sampleData?.categoryFour?.totalCategory ?? 0,
+          },
+          // N'attribuer une erreur que si les données sont absentes
+          error: !sampleData ? formatGraphQLError(action.payload) : null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_TOTAL_SAMPLE_ERR":
+      return {
+        ...state,
+        claimsSample: {
+          ...state.claimsSample,
+          isFetching: false,
+          error: formatServerError(action.payload),
+        },
+      };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_REQ":
       return { ...state, isCreating: true, createError: null };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_RESP":
       return { ...state, isCreating: false, createError: null };
     case "MEDICAL_CONTROLLER_MISSION_CREATE_ERR":
       return { ...state, isCreating: false, createError: formatServerError(action.payload) };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_REQ":
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: true,
+          fetchedClaims: false,
+          errorClaims: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_RESP":
+      const responseData = action.payload.data?.claimsForHealthFacilities;
+      if (!responseData) {
+        return {
+          ...state,
+          claims: {
+            ...state.claims,
+            fetchingClaims: false,
+            fetchedClaims: true,
+            items: [],
+            pageInfo: { totalCount: 0 },
+            totals: {},
+            percentages: {},
+            errorClaims: formatGraphQLError(action.payload),
+          },
+        };
+      }
+      const claimsData = responseData.claims;
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: false,
+          fetchedClaims: true,
+          items: claimsData ? parseData(claimsData).map((item) => item.claim ?? item) : [],
+          pageInfo: claimsData ? pageInfo(claimsData) : { totalCount: 0 },
+          totals: {
+            category1: responseData?.totalCateg1 ?? 0,
+            category2: responseData?.totalCateg2 ?? 0,
+            category3: responseData?.totalCateg3 ?? 0,
+            category4: responseData?.totalCateg4 ?? 0,
+          },
+          percentages: {
+            category1: responseData?.percentageCateg1,
+            category2: responseData?.percentageCateg2,
+            category3: responseData?.percentageCateg3,
+            category4: responseData?.percentageCateg4,
+          },
+          errorClaims: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_ERR":
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          fetchingClaims: false,
+          errorClaims: formatServerError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_REQ":
+      return { ...state, isUpdating: true, updateError: null };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_RESP":
+      return { ...state, isUpdating: false, updateError: null };
+    case "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR":
+      return { ...state, isUpdating: false, updateError: formatServerError(action.payload) };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_REQ":
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: true,
+          fetchedHistory: false,
+          errorHistory: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_RESP":
+      const historyData = action.payload.data?.missionActivityHistory;
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: false,
+          fetchedHistory: true,
+          items: historyData?.edges?.map((edge) => edge?.node) ?? [],
+          pageInfo: { totalCount: historyData?.totalCount ?? 0 },
+          errorHistory: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_HISTORY_ERR":
+      return {
+        ...state,
+        missionHistory: {
+          ...state.missionHistory,
+          fetchingHistory: false,
+          errorHistory: formatServerError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_REQ":
+      return {
+        ...state,
+        missionAvailability: {
+          ...state.missionAvailability,
+          isChecking: true,
+          error: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_RESP":
+      return {
+        ...state,
+        missionAvailability: {
+          isChecking: false,
+          available: action.payload?.data?.checkMissionAvailability,
+          error: formatGraphQLError(action.payload),
+        },
+      };
+    case "MEDICAL_CONTROLLER_MISSION_AVAILABILITY_ERR":
+      return {
+        ...state,
+        missionAvailability: {
+          ...state.missionAvailability,
+          isChecking: false,
+          error: formatServerError(action.payload),
+        },
+      };
     default:
       return state;
   }

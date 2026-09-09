@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { combine, Helmet, useHistory, useParams, useTranslations, withModulesManager, withHistory } from "@openimis/fe-core";
+import { combine, Helmet, historyPush, useHistory, useParams, useTranslations, withModulesManager, withHistory } from "@openimis/fe-core";
 import { Typography, Grid, Paper } from "@material-ui/core";
 import { MODULE_NAME, RIGHT_MEDICAL_CONTROLLER } from "../constants";
 import MissionForm from "../components/form/MissionForm";
@@ -24,7 +24,7 @@ const MissionPage = (props) => {
         <MissionForm
             readOnly={!rights.includes(RIGHT_MEDICAL_CONTROLLER) || !!isLocked || !isLocked}
             mission_code={mission_code}
-            onBack={() => historyPush(modulesManager, history, "medical_controller.missionsList")}
+            onBack={() => historyPush(modulesManager, history, "medical_controller.route.missions")}
         />
 
     );
