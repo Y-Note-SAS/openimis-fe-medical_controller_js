@@ -20,7 +20,6 @@ const styles = (theme) => ({
         marginTop: theme.spacing(2),
     },
 });
-
 const FilterMissionPanel = (props) => {
     const { classes, filters = {}, modulesManager, edited, onChangeFilters = () => { } } = props;
 
