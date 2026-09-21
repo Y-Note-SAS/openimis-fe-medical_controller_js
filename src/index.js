@@ -33,7 +33,7 @@ const DEFAULT_CONFIG = {
     {
       key: "medical_controller_claims_report",
       component: AuditReport,
-      isValid: (values) => values.dateFrom && values.dateTo,
+      isValid: (values) => values.dateFrom && values.dateTo && values.hflocation,
       getParams: (values) => ({
         date_from: values.dateFrom,
         date_to: values.dateTo,
