@@ -39,7 +39,7 @@ const AuditReport = (props) => {
         });
     };
 
-    const onHealtFacilityChange = (hflocation) => {
+    const onHealthFacilityChange = (hflocation) => {
         setValues({ ...values, hflocation });
     };
 
@@ -76,7 +76,7 @@ const AuditReport = (props) => {
                     district={values?.district}
                     value={values?.hflocation}
                     required
-                    onChange={(hflocation) => onHealtFacilityChange(hflocation)}
+                    onChange={(hflocation) => onHealthFacilityChange(hflocation)}
                 />
             </Grid>
             <Grid item>
