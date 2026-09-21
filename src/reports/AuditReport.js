@@ -85,7 +85,7 @@ const AuditReport = (props) => {
                     value={values.dateFrom}
                     module="medical_controller"
                     required
-                    label="auditReport.dateFrom"
+                    label={formatMessage(intl, "medical_controller", "auditReport.dateFrom")}
                     onChange={(dateFrom) => setValues({ ...values, dateFrom })}
                 />
             </Grid>
@@ -95,7 +95,7 @@ const AuditReport = (props) => {
                     value={values.dateTo}
                     module="medical_controller"
                     required
-                    label="auditReport.dateTo"
+                    label={formatMessage(intl, "medical_controller", "auditReport.dateTo")}
                     onChange={(dateTo) => setValues({ ...values, dateTo })}
                 />
             </Grid>
