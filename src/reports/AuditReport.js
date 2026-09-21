@@ -82,7 +82,7 @@ const AuditReport = (props) => {
             <Grid item>
                 <PublishedComponent
                     pubRef="core.DatePicker"
-                    value={values.dateFrom}
+                    value={values?.dateFrom}
                     module="medical_controller"
                     required
                     label={formatMessage(intl, "medical_controller", "auditReport.dateFrom")}
@@ -92,7 +92,7 @@ const AuditReport = (props) => {
             <Grid item>
                 <PublishedComponent
                     pubRef="core.DatePicker"
-                    value={values.dateTo}
+                    value={values?.dateTo}
                     module="medical_controller"
                     required
                     label={formatMessage(intl, "medical_controller", "auditReport.dateTo")}
