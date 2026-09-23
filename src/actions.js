@@ -89,16 +89,32 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
   const healthFacilityIds = missionFilters?.healthFacility?.value || [];
   const missionCode = missionFilters?.missionCode?.value || "";
   const category = missionFilters?.category?.value;
-  const isNextPage = paginationParams.some((param) => param.startsWith("after:"));
-  const isPreviousPage = paginationParams.some((param) => param.startsWith("before:"));
+  const firstParam = paginationParams.find((param) => param.startsWith("first:"));
+  const lastParam = paginationParams.find((param) => param.startsWith("last:"));
+  const afterParam = paginationParams.find((param) => param.startsWith("after:"));
+  const beforeParam = paginationParams.find((param) => param.startsWith("before:"));
 
-  // Le Searcher indique la direction dans paginationParams. Les curseurs utilisés
-  // restent ceux de la page actuellement affichée dans le store.
-  const claimsPagination = isNextPage && claimsPageInfo.endCursor
-    ? `first: 10, after: "${claimsPageInfo.endCursor}"`
-    : isPreviousPage && claimsPageInfo.startCursor
-      ? `last: 10, before: "${claimsPageInfo.startCursor}"`
-      : "first: 10";
+  const pageSize = firstParam
+    ? parseInt(firstParam.split(":")[1], 10)
+    : lastParam
+      ? parseInt(lastParam.split(":")[1], 10)
+      : 10;
+
+  const afterCursor = afterParam
+    ? afterParam.replace("after:", "").trim().replace(/^"|"$/g, "")
+    : claimsPageInfo?.endCursor;
+  const beforeCursor = beforeParam
+    ? beforeParam.replace("before:", "").trim().replace(/^"|"$/g, "")
+    : claimsPageInfo?.startCursor;
+
+  const isNextPage = !!afterParam;
+  const isPreviousPage = !!beforeParam;
+
+  const claimsPagination = isNextPage && afterCursor
+    ? `first: ${pageSize}, after: "${afterCursor}"`
+    : isPreviousPage && beforeCursor
+      ? `last: ${pageSize}, before: "${beforeCursor}"`
+      : `first: ${pageSize}`;
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
