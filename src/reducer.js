@@ -25,10 +25,12 @@ const DEFAULT_STATE = {
     fetchingClaims: false,
     fetchedClaims: false,
     errorClaims: null,
+    missionCode: null,
     items: [],
     pageInfo: { totalCount: 0 },
     totals: {},
-    percentages: {}
+    percentages: {},
+    allAudited: false,
   },
   missionHistory: {
     fetchingHistory: false,
@@ -161,7 +163,17 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.claims,
           fetchingClaims: true,
           fetchedClaims: false,
+          allAudited: false,
           errorClaims: null,
+        },
+      };
+    case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_CONTEXT":
+      return {
+        ...state,
+        claims: {
+          ...state.claims,
+          missionCode: action.payload?.missionCode ?? null,
+          allAudited: false,
         },
       };
     case "MEDICAL_CONTROLLER_CLAIM_SAMPLE_RESP":
@@ -173,10 +185,12 @@ const reducer = (state = DEFAULT_STATE, action) => {
             ...state.claims,
             fetchingClaims: false,
             fetchedClaims: true,
+            missionCode: state.claims.missionCode,
             items: [],
             pageInfo: { totalCount: 0 },
             totals: {},
             percentages: {},
+            allAudited: false,
             errorClaims: formatGraphQLError(action.payload),
           },
         };
@@ -188,6 +202,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
           ...state.claims,
           fetchingClaims: false,
           fetchedClaims: true,
+          missionCode: state.claims.missionCode,
           items: claimsData ? parseData(claimsData).map((item) => item.claim ?? item) : [],
           pageInfo: claimsData ? pageInfo(claimsData) : { totalCount: 0 },
           totals: {
@@ -202,6 +217,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
             category3: responseData?.percentageCateg3,
             category4: responseData?.percentageCateg4,
           },
+          allAudited: responseData?.allAudited === true,
           errorClaims: formatGraphQLError(action.payload),
         },
       };
@@ -211,6 +227,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
         claims: {
           ...state.claims,
           fetchingClaims: false,
+          allAudited: false,
           errorClaims: formatServerError(action.payload),
         },
       };
