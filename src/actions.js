@@ -133,6 +133,7 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
         percentageCateg2
         percentageCateg3
         percentageCateg4
+        allAudited
         claims (${claimsPagination}) {
           pageInfo {
             hasNextPage
@@ -170,7 +171,13 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
     }
   `;
 
-  return graphql(payload, "MEDICAL_CONTROLLER_CLAIM_SAMPLE");
+  return async (dispatch) => {
+    dispatch({
+      type: "MEDICAL_CONTROLLER_CLAIM_SAMPLE_CONTEXT",
+      payload: { missionCode },
+    });
+    return dispatch(graphql(payload, "MEDICAL_CONTROLLER_CLAIM_SAMPLE"));
+  };
 }
 
 export function createMission(mission, clientMutationLabel) {

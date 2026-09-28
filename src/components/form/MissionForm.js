@@ -39,11 +39,19 @@ const MissionForm = (props) => {
   const isFetching = useSelector((state) => state.medical_controller?.mission?.isFetching ?? false);
   const isFetched = useSelector((state) => state.medical_controller?.mission?.isFetched ?? false);
   const error = useSelector((state) => state.medical_controller?.mission?.error ?? null);
+  const claimsMissionCode = useSelector((state) => state.medical_controller?.claims?.missionCode ?? null);
+  const allClaimsAudited = useSelector((state) => state.medical_controller?.claims?.allAudited ?? false);
   const [mission, setMission] = useState({});
   const [showSampleActions, setShowSampleActions] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const actions = [];
+  const canCloseMission =
+    showSampleActions
+    && !!mission?.missionCode
+    && mission?.status != MISSION_STATUS_CLOSED
+    && claimsMissionCode === mission?.missionCode
+    && allClaimsAudited;
 
   // Réinitialiser la mission quand le mission_code change
   useEffect(() => {
@@ -112,7 +120,7 @@ const MissionForm = (props) => {
           variant="contained"
           color="primary"
           startIcon={<StopIcon />}
-          style={{ display: showSampleActions && !!mission?.missionCode && mission?.status != MISSION_STATUS_CLOSED ? "inline-flex" : "none" }}
+          style={{ display: canCloseMission ? "inline-flex" : "none" }}
           onClick={handleOpenCloseDialog}
         >
           {formatMessage("missionForm.close")}
