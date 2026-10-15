@@ -6,6 +6,7 @@ import MissionPage from "./pages/MissionPage";
 import ClaimAuditPage from "./pages/ClaimAuditPage";
 import messages_en from "./translations/en.json";
 import reducer from "./reducer";
+import AuditReport from "./reports/AuditReport";
 import { ROUTE_MEDICAL_CONTROLLER_CLAIM, ROUTE_MEDICAL_CONTROLLER_MISSIONS } from "./constants";
 
 const DEFAULT_CONFIG = {
@@ -28,6 +29,19 @@ const DEFAULT_CONFIG = {
     { path: `${ROUTE_MEDICAL_CONTROLLER_CLAIM}/:mission_code/:claim_uuid`, component: ClaimAuditPage },
   ],
   "core.MainMenu": [MedicalControllerMainMenu],
+  "reports": [
+    {
+      key: "medical_controller_claims_report",
+      component: AuditReport,
+      isValid: (values) => values.dateFrom && values.dateTo && values.hflocation,
+      getParams: (values) => ({
+        date_from: values.dateFrom,
+        date_to: values.dateTo,
+        hflocation: values.hflocation?.code ? values.hflocation.code : 0,
+        district: values.district?.code ? values.district.code : 0,
+      }),
+    },
+  ],
 };
 export const MedicalControllerModule = (cfg) => {
   return { ...DEFAULT_CONFIG, ...cfg };
