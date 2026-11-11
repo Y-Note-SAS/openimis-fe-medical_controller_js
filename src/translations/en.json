@@ -47,5 +47,11 @@
   "createMission.missionDate": "Mission date",
   "createMission.auditors": "Auditors",
   "medical_controller.missions.chief": "Mission chief",
-  "medical_controller.missions.auditors": "Auditors"
+  "medical_controller.missions.auditors": "Auditors",
+  "MissionFilterPanel.category": "Category",
+  "MissionFilterPanel.periodFrom": "From (visit date)",
+  "MissionFilterPanel.periodTo": "To (visit date)",
+  "MissionFilterPanel.month": "Month",
+  "MissionFilterPanel.allMonths": "All months",
+  "MissionFilterPanel.dateRangeError": "The start date must be before the end date"
 }
