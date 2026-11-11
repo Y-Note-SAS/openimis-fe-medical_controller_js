@@ -100,7 +100,7 @@ const SamplePanel = (props) => {
     // Clé utilisée pour remonter le ClaimSearcher et réinitialiser ses filtres internes
     const [sampleGenKey, setSampleGenKey] = useState(0);
     // Valeurs locales des pourcentages (permettent de garder les choix de l'utilisateur)
-    const [sampleValues, setSampleValues] = useState({ category1: 0, category2: 0, category3: 0, category4: 0 });
+    const [sampleValues, setSampleValues] = useState({ category1: 0, category2: 0, category3: 0, category4: 0, category5: 0 });
     const lastProcessedSignature = useRef(null);
     const {
         fetchingClaims,
@@ -165,6 +165,7 @@ const SamplePanel = (props) => {
                 category2: edited?.sample?.category2 ?? safeNumber(claimsPercentages?.category2) ?? DEFAULT_SAMPLE.category2,
                 category3: edited?.sample?.category3 ?? safeNumber(claimsPercentages?.category3) ?? DEFAULT_SAMPLE.category3,
                 category4: edited?.sample?.category4 ?? safeNumber(claimsPercentages?.category4) ?? DEFAULT_SAMPLE.category4,
+                category5: edited?.sample?.category5 ?? safeNumber(claimsPercentages?.category5) ?? DEFAULT_SAMPLE.category5,
             }
             : { ...DEFAULT_SAMPLE };
 
@@ -209,7 +210,7 @@ const SamplePanel = (props) => {
         setFilters(defaultFilters);
         setHasGeneratedSample(true)
         setSampleGenKey((key) => key + 1);
-        setSampleValues({ category1: 0, category2: 0, category3: 0, category4: 0 });
+        setSampleValues({ category1: 0, category2: 0, category3: 0, category4: 0, category5: 0 });
         try {
             if (typeof handleShowSampleActions === "function") handleShowSampleActions();
         } catch (err) {
@@ -239,6 +240,7 @@ const SamplePanel = (props) => {
                     category2: sample.category2 ?? DEFAULT_SAMPLE.category2,
                     category3: sample.category3 ?? DEFAULT_SAMPLE.category3,
                     category4: sample.category4 ?? DEFAULT_SAMPLE.category4,
+                    category5: sample.category5 ?? DEFAULT_SAMPLE.category5,
                 },
                 edited?.missionCode,
             ));

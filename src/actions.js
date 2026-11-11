@@ -18,12 +18,14 @@ export function fetchTotalSample(mm, healthFacilityIds, categories, missionCode)
         percentageCategTwo: "${categories.category2}",
         percentageCategThree: "${categories.category3}",
         percentageCategFour: "${categories.category4}",
+        percentageCategFive: "${categories.category5}",
         missionCode: "${missionCode}"
       ) {
         categoryOne{ totalCategory }
         categoryTwo{ totalCategory }
         categoryThree{ totalCategory }
         categoryFour{ totalCategory }
+        categoryFive{ totalCategory }
       }
     }
   `;
@@ -78,7 +80,8 @@ export function fetchMission(mm, missionCode) {
     "percentageOne",
     "percentageTwo",
     "percentageThree",
-    "percentageFour"
+    "percentageFour",
+    "percentageFive",
   ];
 
   const payload = formatPageQueryWithCount("missions", [`missionCode: "${missionCode}"`], projections);
@@ -129,10 +132,12 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
         totalCateg2
         totalCateg3
         totalCateg4
+        totalCateg5
         percentageCateg1
         percentageCateg2
         percentageCateg3
         percentageCateg4
+        percentageCateg5
         allAudited
         claims (${claimsPagination}) {
           pageInfo {
