@@ -37,5 +37,11 @@
   "medical_controller.missionForm.confirmClose.message": "",
   "closeMission.mutationLabel": "",
   "auditReport.dateFrom": "Date from",
-  "auditReport.dateTo": "Date to"
+  "auditReport.dateTo": "Date to",
+  "MissionFilterPanel.category": "Category",
+  "MissionFilterPanel.periodFrom": "From (visit date)",
+  "MissionFilterPanel.periodTo": "To (visit date)",
+  "MissionFilterPanel.month": "Month",
+  "MissionFilterPanel.allMonths": "All months",
+  "MissionFilterPanel.dateRangeError": "The start date must be before the end date"
 }

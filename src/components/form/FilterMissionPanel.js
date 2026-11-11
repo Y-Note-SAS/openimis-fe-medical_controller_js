@@ -1,7 +1,14 @@
-import React from "react";
-import { Grid, Divider, Paper, Typography } from "@material-ui/core";
+import React, { useMemo, useState } from "react";
+import { Grid, Typography } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
-import { combine, FormattedMessage, PublishedComponent } from "@openimis/fe-core";
+import { useIntl } from "react-intl";
+import {
+    combine,
+    PublishedComponent,
+    SelectInput,
+    useTranslations,
+    withModulesManager,
+} from "@openimis/fe-core";
 import { MODULE_NAME } from "../../constants";
 
 const styles = (theme) => ({
@@ -19,10 +26,20 @@ const styles = (theme) => ({
     fieldRow: {
         marginTop: theme.spacing(2),
     },
+    error: {
+        color: theme.palette.error.main,
+        fontSize: "0.75rem",
+        marginTop: theme.spacing(0.5),
+    },
 });
+
+const MAX_MONTHS = 36;
 
 const FilterMissionPanel = (props) => {
     const { classes, filters = {}, modulesManager, edited, onChangeFilters = () => { } } = props;
+    const intl = useIntl();
+    const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
+    const [rangeError, setRangeError] = useState(null);
 
     const normalizeHealthFacilities = (raw) => {
         if (Array.isArray(raw)) {
@@ -57,7 +74,77 @@ const FilterMissionPanel = (props) => {
         id: "category",
         value,
         filter: `${value}`,
-    } : { id:"category", value };
+    } : { id: "category", value };
+
+    // Mois contenus dans la mission (bornes incluses)
+    const missionMonths = useMemo(() => {
+        if (!edited?.startDate || !edited?.endDate) {
+            return [];
+        }
+        const start = new Date(edited.startDate);
+        const end = new Date(edited.endDate);
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+            return [];
+        }
+        const months = [];
+        let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        const last = new Date(end.getFullYear(), end.getMonth(), 1);
+        while (cursor <= last && months.length < MAX_MONTHS) {
+            months.push({
+                value: `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`,
+                label: intl.formatDate(cursor, { month: "long", year: "numeric" }),
+            });
+            cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+        }
+        return months;
+    }, [edited?.startDate, edited?.endDate, intl]);
+
+    const dateFilter = (id, value) => ({
+        id,
+        value: value || null,
+        filter: value ? `claim_DateTo_${id === "dateFrom" ? "Gte" : "Lte"}: "${value}"` : null,
+    });
+
+    const onChangeDate = (id, value) => {
+        const from = id === "dateFrom" ? value : filterValue("dateFrom");
+        const to = id === "dateTo" ? value : filterValue("dateTo");
+        if (from && to && from > to) {
+            setRangeError(formatMessage("MissionFilterPanel.dateRangeError"));
+            return;
+        }
+        setRangeError(null);
+        // le mois est un raccourci : une saisie manuelle le remet a zero
+        onChangeFilters([
+            dateFilter("dateFrom", from),
+            dateFilter("dateTo", to),
+            { id: "month", value: null, filter: null },
+        ]);
+    };
+
+    const onChangeMonth = (value) => {
+        if (!value) {
+            setRangeError(null);
+            onChangeFilters([
+                { id: "month", value: null, filter: null },
+                dateFilter("dateFrom", null),
+                dateFilter("dateTo", null),
+            ]);
+            return;
+        }
+        const [year, month] = String(value).split("-").map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        setRangeError(null);
+        onChangeFilters([
+            { id: "month", value, filter: null },
+            dateFilter("dateFrom", `${value}-01`),
+            dateFilter("dateTo", `${value}-${String(lastDay).padStart(2, "0")}`),
+        ]);
+    };
+
+    const monthOptions = [
+        { value: "", label: formatMessage("MissionFilterPanel.allMonths") },
+        ...missionMonths,
+    ];
 
     return (
         <Grid container className={classes.item} spacing={2}>
@@ -82,6 +169,43 @@ const FilterMissionPanel = (props) => {
                     onChange={(value) => onChangeFilters([categoryFilter(value)].filter(Boolean))}
                 />
             </Grid>
+
+            <Grid item xs={6} md={3} className={classes.item}>
+                <PublishedComponent
+                    pubRef="core.DatePicker"
+                    module={MODULE_NAME}
+                    label="MissionFilterPanel.periodFrom"
+                    value={filterValue("dateFrom")}
+                    onChange={(value) => onChangeDate("dateFrom", value)}
+                />
+            </Grid>
+
+            <Grid item xs={6} md={3} className={classes.item}>
+                <PublishedComponent
+                    pubRef="core.DatePicker"
+                    module={MODULE_NAME}
+                    label="MissionFilterPanel.periodTo"
+                    value={filterValue("dateTo")}
+                    onChange={(value) => onChangeDate("dateTo", value)}
+                />
+            </Grid>
+
+            <Grid item xs={6} md={2} className={classes.item}>
+                <SelectInput
+                    module={MODULE_NAME}
+                    name="missionMonth"
+                    label="MissionFilterPanel.month"
+                    options={monthOptions}
+                    value={filterValue("month") ?? ""}
+                    onChange={onChangeMonth}
+                />
+            </Grid>
+
+            {rangeError && (
+                <Grid item xs={12}>
+                    <Typography className={classes.error}>{rangeError}</Typography>
+                </Grid>
+            )}
         </Grid>
     );
 };
