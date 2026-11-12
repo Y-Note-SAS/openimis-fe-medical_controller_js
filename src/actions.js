@@ -118,12 +118,19 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
+  // type de prestation (categorie 1) : codes de services forfaitaires
+  const serviceCodes = missionFilters?.services?.value;
+  const servicesArg =
+    Array.isArray(serviceCodes) && serviceCodes.length
+      ? `, services: [${serviceCodes.map((code) => `"${code}"`).join(", ")}]`
+      : "";
+
   const payload = `
     query {
       claimsForHealthFacilities(
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}"
-        ${category != null ? `,category: "${category}"` : ""}
+        ${category != null ? `,category: "${category}"` : ""}${servicesArg}
       ) {
         totalCateg1
         totalCateg2
