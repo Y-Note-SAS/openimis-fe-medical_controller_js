@@ -21,7 +21,7 @@ const MissionServicePicker = (props) => {
 
     const { isLoading, data, error } = useGraphqlQuery(
         `query MissionServicePicker {
-            medicalServices(packagetype: P, first: 500) {
+            medicalServices(packagetype: P, first: 100) {
                 edges {
                     node {
                         id
