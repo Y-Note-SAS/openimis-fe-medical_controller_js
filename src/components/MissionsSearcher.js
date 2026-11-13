@@ -25,6 +25,19 @@ const MissionsSearcher = (props) => {
     "medical_controller.missions.status",
   ];
 
+  const sorts = useCallback(
+    () => [
+      ["missionCode", true],
+      ["region__name", true],
+      ["district__name", true],
+      ["user", true],
+      ["startDate", false],
+      ["endDate", false],
+      ["status", true],
+    ],
+    []
+  );
+
   const itemFormatters = useCallback(
     () => [
       (mission) => mission.missionCode,
@@ -43,7 +56,11 @@ const MissionsSearcher = (props) => {
       .filter((key) => state.filters[key].filter)
       .map((key) => state.filters[key].filter);
 
-    params.push(`orderBy: "-dateCreated"`);
+    if (state.orderBy) {
+      params.push(`orderBy: ["${state.orderBy}"]`);
+    } else {
+      params.push(`orderBy: ["-dateCreated"]`);
+    }
 
     if (!state.beforeCursor && !state.afterCursor) {
       params.push(`first: ${state.pageSize}`);
@@ -73,9 +90,11 @@ const MissionsSearcher = (props) => {
       tableTitle={formatMessageWithValues("missions.table.title", { count: pageInfo.totalCount ?? 0 })}
       fetch={onFiltersChange}
       headers={headers}
+      sorts={sorts}
       itemFormatters={itemFormatters}
       rowIdentifier={(mission) => mission.uuid}
       filtersToQueryParams={filtersToQueryParams}
+      defaultOrderBy="-dateCreated"
       onDoubleClick={onDoubleClick}
     />
   );
