@@ -45,7 +45,8 @@ const MissionServicePicker = (props) => {
         );
     }, [data, searchString]);
 
-    const formatService = (service) => (service ? `${service.code} — ${service.name}` : "");
+    const formatService = (service) =>
+        service && service.code ? `${service.code} — ${service.name}` : "";
 
     return (
         <Autocomplete

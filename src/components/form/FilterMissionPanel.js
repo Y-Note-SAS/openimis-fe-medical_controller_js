@@ -97,7 +97,11 @@ const FilterMissionPanel = (props) => {
                         multiple
                         value={filterValue("services") ?? []}
                         onChange={(value) => onChangeFilters([
-                            { id: "services", value: (value ?? []).map((service) => service.code), filter: null },
+                            {
+                                id: "services",
+                                value: Array.isArray(value) ? value.filter(Boolean) : [],
+                                filter: null,
+                            },
                         ])}
                     />
                 </Grid>
