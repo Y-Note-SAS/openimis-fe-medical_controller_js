@@ -3,6 +3,7 @@ import { Grid, Divider, Paper, Typography } from "@material-ui/core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
 import { combine, FormattedMessage, PublishedComponent } from "@openimis/fe-core";
 import { MODULE_NAME } from "../../constants";
+import MissionServicePicker from "../../pickers/MissionServicePicker";
 
 const styles = (theme) => ({
     paper: {
@@ -79,9 +80,32 @@ const FilterMissionPanel = (props) => {
                     withLabel
                     label="MissionFilterPanel.category"
                     value={filterValue("category")}
-                    onChange={(value) => onChangeFilters([categoryFilter(value)].filter(Boolean))}
+                    onChange={(value) => {
+                        const next = [categoryFilter(value)];
+                        if (value !== 1) {
+                            // le filtre "type de prestation" n'a de sens que pour la categorie 1
+                            next.push({ id: "services", value: null, filter: null });
+                        }
+                        onChangeFilters(next.filter(Boolean));
+                    }}
                 />
             </Grid>
+
+            {filterValue("category") === 1 && (
+                <Grid item xs={6} md={3} className={classes.item}>
+                    <MissionServicePicker
+                        multiple
+                        value={filterValue("services") ?? []}
+                        onChange={(value) => onChangeFilters([
+                            {
+                                id: "services",
+                                value: Array.isArray(value) ? value.filter(Boolean) : [],
+                                filter: null,
+                            },
+                        ])}
+                    />
+                </Grid>
+            )}
         </Grid>
     );
 };
