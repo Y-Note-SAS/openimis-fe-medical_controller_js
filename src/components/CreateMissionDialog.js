@@ -76,6 +76,7 @@ const EMPTY_STATE = {
   startYear: "",
   endMonth: "",
   endYear: "",
+  missionDate: null,
 };
 
 const CreateMissionDialog = (props) => {
@@ -135,7 +136,7 @@ const CreateMissionDialog = (props) => {
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
     return !!mission.region && Array.isArray(mission.districts) && mission.districts.length > 0 && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
-      && !!mission.endYear && (endDate > startDate);
+      && !!mission.endYear && (endDate > startDate) && !!mission.missionDate;
   };
 
   const save = async () => {
@@ -351,6 +352,22 @@ const CreateMissionDialog = (props) => {
                 </Typography>
               )}
             </div>
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="createMission.missionDate"
+              value={mission.missionDate}
+              required
+              onChange={(value) => updateField("missionDate", value)}
+            />
+            {errors.missionDate && (
+              <Typography className={classes.errorText}>
+                {errors.missionDate}
+              </Typography>
+            )}
           </Grid>
         </Grid>
       </DialogContent>
