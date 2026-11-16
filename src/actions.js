@@ -58,6 +58,7 @@ export function fetchMissions(filters) {
       "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
+      "missionDate",
       "status",
       "dateCreated"
     ],
@@ -76,6 +77,7 @@ export function fetchMission(mm, missionCode) {
     "district { uuid id code name parent {id uuid code name type} type }",
     "startDate",
     "endDate",
+    "missionDate",
     "status",
     "percentageOne",
     "percentageTwo",
@@ -192,6 +194,7 @@ export function createMission(mission, clientMutationLabel) {
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
+      missionDate: "${mission.missionDate}"
     `;
 
   let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
