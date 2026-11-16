@@ -102,7 +102,7 @@ const FilterMissionPanel = (props) => {
     const dateFilter = (id, value) => ({
         id,
         value: value || null,
-        filter: value ? `claim_DateTo_${id === "dateFrom" ? "Gte" : "Lte"}: "${value}"` : null,
+        filter: value ? `claim_DateClaimed_${id === "dateFrom" ? "Gte" : "Lte"}: "${value}"` : null,
     });
 
     const onChangeDate = (id, value) => {
