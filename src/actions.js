@@ -186,10 +186,14 @@ export function createMission(mission, clientMutationLabel) {
     : mission.districts
       ? [mission.districts]
       : [];
+  const districtIds = districts
+    .map((d) => d?.id)
+    .filter((id) => !!id)
+    .map((id) => decodeId(id));
 
   const mutationInput = `
       regionId: ${decodeId(mission.region.id)}
-      districtIds: [${districts.map((d) => decodeId(d.id)).join(", ")}]
+      districtIds: [${districtIds.join(", ")}]
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
