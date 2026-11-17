@@ -11,6 +11,14 @@ const styles = () => ({});
 const formatMedicalController = (controller) =>
   controller ? `${controller.otherNames} ${controller.lastName}` : "";
 
+const formatDistricts = (mission) => {
+  const edges = mission?.districts?.edges ?? [];
+  return edges
+    .map((edge) => edge?.node?.district?.name)
+    .filter(Boolean)
+    .join(", ");
+};
+
 const MissionsSearcher = (props) => {
   const { error, fetched, fetching, items, modulesManager, onFiltersChange, onDoubleClick, pageInfo } = props;
   const { formatDateFromISO, formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
@@ -29,7 +37,7 @@ const MissionsSearcher = (props) => {
     () => [
       (mission) => mission.missionCode,
       (mission) => mission.region?.name,
-      (mission) => mission.district?.name,
+      (mission) => formatDistricts(mission),
       (mission) => formatMedicalController(mission.user),
       (mission) => formatMonthYear(mission.startDate),
       (mission) => formatMonthYear(mission.endDate),

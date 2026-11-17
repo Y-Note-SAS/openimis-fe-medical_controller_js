@@ -52,7 +52,7 @@ export function fetchMissions(filters) {
       "id",
       "missionCode",
       "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
-      "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "districts { edges { node { district { uuid, id, code, name, parent {id, uuid, code, name, type}, type } } } }",
       "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
