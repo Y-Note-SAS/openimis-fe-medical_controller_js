@@ -24,6 +24,7 @@ import {
   decodeId,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
+import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -77,12 +78,16 @@ const EMPTY_STATE = {
   endMonth: "",
   endYear: "",
   missionDate: null,
+  auditors: [],
 };
 
 const CreateMissionDialog = (props) => {
   const { classes, intl, open, onClose } = props;
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
+  );
+  const currentInteractiveUserId = useSelector(
+    (state) => state.core?.user?.i_user?.id
   );
 
   const [mission, setMission] = useState(EMPTY_STATE);
@@ -352,6 +357,16 @@ const CreateMissionDialog = (props) => {
                 </Typography>
               )}
             </div>
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <MedicalControllerPicker
+              multiple
+              value={mission.auditors}
+              excludeIds={currentInteractiveUserId ? [currentInteractiveUserId] : []}
+              label={formatMessage(intl, MODULE_NAME, "createMission.auditors")}
+              onChange={(value) => updateField("auditors", value ?? [])}
+            />
           </Grid>
 
           <Grid item xs={12} className={classes.fieldItem}>
