@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { combine, Searcher, useTranslations, withModulesManager } from "@openimis/fe-core";
 import { withStyles, withTheme } from "@material-ui/core/styles";
+import { Tooltip } from "@material-ui/core";
 import MissionsFilter from "./MissionsFilter";
 import { MODULE_NAME } from "../constants";
 import { formatMonthYear } from "../helpers/utils";
@@ -10,6 +11,36 @@ const styles = () => ({});
 
 const formatMedicalController = (controller) =>
   controller ? `${controller.otherNames} ${controller.lastName}` : "";
+
+const getMissionDistrictNames = (mission) => {
+  const rawDistricts = mission?.districts;
+  const normalizedDistricts = Array.isArray(rawDistricts)
+    ? rawDistricts.map((d) => d?.district ?? d)
+    : Array.isArray(rawDistricts?.edges)
+      ? rawDistricts.edges.map((e) => e?.node?.district ?? e?.node ?? e)
+      : mission?.district
+        ? [mission.district]
+        : [];
+
+  return normalizedDistricts.map((d) => d?.name).filter(Boolean);
+};
+
+const formatDistricts = (mission) => {
+  const districtNames = getMissionDistrictNames(mission);
+  if (districtNames.length <= 2) {
+    return districtNames.join(", ");
+  }
+
+  const remainingCount = districtNames.length - 2;
+  const visibleDistricts = districtNames.slice(0, 2).join(", ");
+  const remainingDistricts = districtNames.slice(2).join(", ");
+
+  return (
+    <Tooltip title={`${remainingCount} district${remainingCount > 1 ? "s" : ""} restant${remainingCount > 1 ? "s" : ""}: ${remainingDistricts}`}>
+      <span>{`${visibleDistricts} +${remainingCount}`}</span>
+    </Tooltip>
+  );
+};
 
 const MissionsSearcher = (props) => {
   const { error, fetched, fetching, items, modulesManager, onFiltersChange, onDoubleClick, pageInfo } = props;
@@ -29,13 +60,13 @@ const MissionsSearcher = (props) => {
     () => [
       (mission) => mission.missionCode,
       (mission) => mission.region?.name,
-      (mission) => mission.district?.name,
+      (mission) => formatDistricts(mission),
       (mission) => formatMedicalController(mission.user),
       (mission) => formatMonthYear(mission.startDate),
       (mission) => formatMonthYear(mission.endDate),
       (mission) => formatMessage(`missions.status.${mission.status}`),
     ],
-    []
+    [formatMessage]
   );
 
   const filtersToQueryParams = useCallback((state) => {
