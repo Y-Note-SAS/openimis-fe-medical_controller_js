@@ -25,7 +25,7 @@ const getMissionDistrictNames = (mission) => {
   return normalizedDistricts.map((d) => d?.name).filter(Boolean);
 };
 
-const formatDistricts = (mission) => {
+const formatDistricts = (mission, formatMessageWithValues) => {
   const districtNames = getMissionDistrictNames(mission);
   if (districtNames.length <= 2) {
     return districtNames.join(", ");
@@ -34,9 +34,13 @@ const formatDistricts = (mission) => {
   const remainingCount = districtNames.length - 2;
   const visibleDistricts = districtNames.slice(0, 2).join(", ");
   const remainingDistricts = districtNames.slice(2).join(", ");
+  const tooltipTitle = formatMessageWithValues("missions.searcher.districts.remainingTooltip", {
+    count: remainingCount,
+    districts: remainingDistricts,
+  });
 
   return (
-    <Tooltip title={`${remainingCount} district${remainingCount > 1 ? "s" : ""} restant${remainingCount > 1 ? "s" : ""}: ${remainingDistricts}`}>
+    <Tooltip title={tooltipTitle}>
       <span>{`${visibleDistricts} +${remainingCount}`}</span>
     </Tooltip>
   );
@@ -60,13 +64,13 @@ const MissionsSearcher = (props) => {
     () => [
       (mission) => mission.missionCode,
       (mission) => mission.region?.name,
-      (mission) => formatDistricts(mission),
+      (mission) => formatDistricts(mission, formatMessageWithValues),
       (mission) => formatMedicalController(mission.user),
       (mission) => formatMonthYear(mission.startDate),
       (mission) => formatMonthYear(mission.endDate),
       (mission) => formatMessage(`missions.status.${mission.status}`),
     ],
-    [formatMessage]
+    [formatMessage, formatMessageWithValues]
   );
 
   const filtersToQueryParams = useCallback((state) => {
