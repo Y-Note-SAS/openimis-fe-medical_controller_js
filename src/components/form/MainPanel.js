@@ -50,6 +50,19 @@ const MainPanel = (props) => {
     displayedHealthFacilities = [];
   }
 
+  // Normalize edited.districts into a safe array of district objects
+  const _rawDistricts = edited?.districts;
+  let displayedDistricts = [];
+  if (Array.isArray(_rawDistricts)) {
+    displayedDistricts = _rawDistricts.map((d) => d?.district ?? d);
+  } else if (_rawDistricts && Array.isArray(_rawDistricts.edges)) {
+    displayedDistricts = _rawDistricts.edges.map((e) => e?.node?.district ?? e?.node ?? e);
+  } else if (edited?.district) {
+    displayedDistricts = [edited.district];
+  } else {
+    displayedDistricts = [];
+  }
+
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
 
@@ -80,9 +93,10 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
-          value={edited.district}
+          value={displayedDistricts}
           region={edited.region}
           parentLocation={edited.region}
+          multiple
           readOnly={readOnly}
           label={formatMessage("medical_controller.missions.district")}
         />
@@ -91,7 +105,7 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="location.HealthFacilityPicker"
           value={displayedHealthFacilities}
-          district={edited.district}
+          district={displayedDistricts}
           region={edited.region}
           multiple
           autoComplete
