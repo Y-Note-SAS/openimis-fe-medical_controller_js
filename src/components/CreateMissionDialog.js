@@ -70,7 +70,7 @@ const styles = (theme) => ({
 
 const EMPTY_STATE = {
   region: null,
-  district: [],
+  districts: [],
   healthFacilities: [],
   startMonth: "",
   startYear: "",
@@ -106,16 +106,17 @@ const CreateMissionDialog = (props) => {
     setMission((prev) => ({
       ...prev,
       region: value,
-      district: [],
+      districts: [],
       healthFacilities: [],
     }));
   };
 
   const handleDistrictChange = (value) => {
+    const districts = Array.isArray(value) ? value : [];
     setMission((prev) => ({
       ...prev,
-      healthFacilities: !!value ? mission.healthFacilities : [],
-      district: Array.isArray(value) ? value : [],
+      healthFacilities: districts.length ? prev.healthFacilities : [],
+      districts,
     }));
     if (errors.district) {
       setErrors((prev) => ({ ...prev, district: null }));
@@ -132,21 +133,21 @@ const CreateMissionDialog = (props) => {
   const cansave = () => {
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
-    return !!mission.region && Array.isArray(mission.district) && mission.district.length > 0 && !!mission.healthFacilities
+    return !!mission.region && Array.isArray(mission.districts) && mission.districts.length > 0 && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
       && !!mission.endYear && (endDate > startDate);
   };
 
   const save = async () => {
     // Garde de sécurité : vérifier qu'au moins un district existe avant de continuer
-    if (!Array.isArray(mission.district) || mission.district.length === 0) return;
+    if (!Array.isArray(mission.districts) || mission.districts.length === 0) return;
 
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
 
     // Vérifier l'unicité de la mission pour chaque district sur cette période
     try {
-      for (const district of mission.district) {
+      for (const district of mission.districts) {
         const availabilityResponse = await props.checkMissionAvailability(
           decodeId(district.id),
           startDate,
@@ -181,27 +182,17 @@ const CreateMissionDialog = (props) => {
     }
 
     try {
-      for (const district of mission.district) {
-        const districtHealthFacilities = (mission.healthFacilities ?? []).filter(
-          (hf) => hf?.location?.uuid === district?.uuid,
-        );
+      const response = await props.createMission(
+        {
+          ...mission,
+          districts: mission.districts,
+          healthFacilities: mission.healthFacilities,
+        },
+        formatMessage(intl, MODULE_NAME, "createMission"),
+      );
 
-        if (!districtHealthFacilities.length) {
-          continue;
-        }
-
-        const response = await props.createMission(
-          {
-            ...mission,
-            district,
-            healthFacilities: districtHealthFacilities,
-          },
-          formatMessage(intl, MODULE_NAME, "createMission"),
-        );
-
-        // If the action returned an error, don't close dialog
-        if (!response || response.error) return;
-      }
+      // If the action returned an error, don't close dialog
+      if (!response || response.error) return;
 
       if (props.onCreated) props.onCreated();
       handleClose();
@@ -264,7 +255,7 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={1}
-              value={mission.district}
+              value={mission.districts}
               region={mission.region}
               withNull
               onChange={handleDistrictChange}
@@ -283,7 +274,7 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.HealthFacilityPicker"
               value={mission.healthFacilities}
-              district={mission.district}
+              district={mission.districts}
               region={mission.region}
               multiple
               required
