@@ -181,9 +181,15 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 }
 
 export function createMission(mission, clientMutationLabel) {
+  const districts = Array.isArray(mission.districts)
+    ? mission.districts
+    : mission.districts
+      ? [mission.districts]
+      : [];
+
   const mutationInput = `
       regionId: ${decodeId(mission.region.id)}
-      districtId: ${decodeId(mission.district.id)}
+      districtIds: [${districts.map((d) => decodeId(d.id)).join(", ")}]
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
