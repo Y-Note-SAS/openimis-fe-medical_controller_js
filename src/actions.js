@@ -52,7 +52,7 @@ export function fetchMissions(filters) {
       "id",
       "missionCode",
       "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
-      "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "districts { edges { node { district { uuid, id, code, name, parent {id, uuid, code, name, type}, type } } } }",
       "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
@@ -72,7 +72,7 @@ export function fetchMission(mm, missionCode) {
     "user { id lastName otherNames username }",
     "healthFacilities { edges { node { id healthFacility { id uuid code name level} } } }",
     "region { uuid id code name parent {id uuid code name type} type }",
-    "district { uuid id code name parent {id uuid code name type} type }",
+    "districts { edges { node { district { uuid id code name parent {id uuid code name type} type }}}}",
     "startDate",
     "endDate",
     "missionDate",
@@ -183,9 +183,15 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 }
 
 export function createMission(mission, clientMutationLabel) {
+  const districts = Array.isArray(mission.districts)
+    ? mission.districts
+    : mission.districts
+      ? [mission.districts]
+      : [];
+
   const mutationInput = `
       regionId: ${decodeId(mission.region.id)}
-      districtId: ${decodeId(mission.district.id)}
+      districtIds: [${districts.map((d) => decodeId(d.id)).join(", ")}]
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"

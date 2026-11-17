@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { injectIntl } from "react-intl";
 import {
   Button,
@@ -10,7 +10,6 @@ import {
   Divider,
   Grid,
   Typography,
-  TextField,
   FormLabel
 } from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
@@ -18,7 +17,6 @@ import {
   combine,
   formatMessage,
   PublishedComponent,
-  TextInput,
   withModulesManager,
   MonthPicker,
   YearPicker,
@@ -73,7 +71,7 @@ const styles = (theme) => ({
 
 const EMPTY_STATE = {
   region: null,
-  district: null,
+  districts: [],
   healthFacilities: [],
   startMonth: "",
   startYear: "",
@@ -84,8 +82,7 @@ const EMPTY_STATE = {
 };
 
 const CreateMissionDialog = (props) => {
-  const { classes, intl, modulesManager, open, onClose, onCreated } = props;
-  const dispatch = useDispatch();
+  const { classes, intl, open, onClose } = props;
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
   );
@@ -115,17 +112,17 @@ const CreateMissionDialog = (props) => {
     setMission((prev) => ({
       ...prev,
       region: value,
-      district: null,
+      districts: [],
       healthFacilities: [],
     }));
   };
 
   const handleDistrictChange = (value) => {
+    const districts = Array.isArray(value) ? value : [];
     setMission((prev) => ({
       ...prev,
-      region: value?.parent ?? mission.region,
-      district: value,
-      healthFacilities: !!value ? mission.healthFacilities : [],
+      healthFacilities: districts.length ? prev.healthFacilities : [],
+      districts,
     }));
     if (errors.district) {
       setErrors((prev) => ({ ...prev, district: null }));
@@ -135,8 +132,6 @@ const CreateMissionDialog = (props) => {
   const onChangeHealthFacilities = (value) => {
     setMission((prev) => ({
       ...prev,
-      region: value?.length > 0 ? value[0]?.location?.parent : mission.region,
-      district: value?.length > 0 ? value[0]?.location : mission.district,
       healthFacilities: value ?? [],
     }));
   };
@@ -144,42 +139,44 @@ const CreateMissionDialog = (props) => {
   const cansave = () => {
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
-    return !!mission.region && !!mission.district && !!mission.healthFacilities
+    return !!mission.region && Array.isArray(mission.districts) && mission.districts.length > 0 && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
       && !!mission.endYear && (endDate > startDate) && !!mission.missionDate;
   };
 
   const save = async () => {
-    // Garde de sécurité : vérifier que le district existe avant de continuer
-    if (!mission.district) return;
+    // Garde de sécurité : vérifier qu'au moins un district existe avant de continuer
+    if (!Array.isArray(mission.districts) || mission.districts.length === 0) return;
 
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
 
-    // Vérifier l'unicité de la mission pour ce district sur cette période
+    // Vérifier l'unicité de la mission pour chaque district sur cette période
     try {
-      const availabilityResponse = await props.checkMissionAvailability(
-        decodeId(mission.district.id),
-        startDate,
-        endDate,
-      );
+      for (const district of mission.districts) {
+        const availabilityResponse = await props.checkMissionAvailability(
+          decodeId(district.id),
+          startDate,
+          endDate,
+        );
 
-      // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
-      if (!availabilityResponse || availabilityResponse.error) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
-        }));
-        return;
-      }
+        // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
+        if (!availabilityResponse || availabilityResponse.error) {
+          setErrors((prev) => ({
+            ...prev,
+            district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
+          }));
+          return;
+        }
 
-      const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
-      if (available === false) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
-        }));
-        return;
+        const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
+        if (available === false) {
+          setErrors((prev) => ({
+            ...prev,
+            district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
+          }));
+          return;
+        }
       }
     } catch (err) {
       console.error("checkMissionAvailability error", err);
@@ -192,7 +189,11 @@ const CreateMissionDialog = (props) => {
 
     try {
       const response = await props.createMission(
-        mission,
+        {
+          ...mission,
+          districts: mission.districts,
+          healthFacilities: mission.healthFacilities,
+        },
         formatMessage(intl, MODULE_NAME, "createMission"),
       );
 
@@ -260,12 +261,13 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={1}
-              value={mission.district}
+              value={mission.districts}
               region={mission.region}
               withNull
               onChange={handleDistrictChange}
               required
               parentLocation={mission.region}
+              multiple
             />
             {errors.district && (
               <Typography color="error" variant="body2" style={{ marginTop: 4 }}>
@@ -278,7 +280,7 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.HealthFacilityPicker"
               value={mission.healthFacilities}
-              district={mission.district}
+              district={mission.districts}
               region={mission.region}
               multiple
               required
