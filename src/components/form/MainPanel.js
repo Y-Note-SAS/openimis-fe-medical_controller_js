@@ -77,7 +77,7 @@ const MainPanel = (props) => {
             id
             user {
               id
-              username
+              loginName
               lastName
               otherNames
             }
@@ -92,7 +92,7 @@ const MainPanel = (props) => {
     .map((edge) => edge.node?.user)
     .filter(Boolean);
   const auditorsLabel = auditors
-    .map((user) => `${user.lastName ?? ""} ${user.otherNames ?? ""} (${user.username ?? ""})`.trim())
+    .map((user) => `${user.lastName ?? ""} ${user.otherNames ?? ""} (${user.loginName ?? ""})`.trim())
     .join(", ");
 
   const currentYear = new Date().getFullYear();
