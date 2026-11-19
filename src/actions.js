@@ -196,7 +196,10 @@ export function createMission(mission, clientMutationLabel) {
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
       missionDate: "${mission.missionDate}"
-      user_ids: [${(mission.auditors ?? []).map((auditor) => auditor.interactiveId).filter(Boolean).join(", ")}]
+      userIds: [${(mission.auditors ?? [])
+        .map((auditor) => decodeId(auditor.interactiveId))
+        .filter((id) => id != null)
+        .join(", ")}]
     `;
 
   let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
