@@ -24,6 +24,7 @@ import {
   decodeId,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
+import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -76,12 +77,17 @@ const EMPTY_STATE = {
   startYear: "",
   endMonth: "",
   endYear: "",
+  missionDate: null,
+  auditors: [],
 };
 
 const CreateMissionDialog = (props) => {
   const { classes, intl, open, onClose } = props;
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
+  );
+  const currentInteractiveUserId = useSelector(
+    (state) => state.core?.user?.i_user?.id
   );
 
   const [mission, setMission] = useState(EMPTY_STATE);
@@ -135,7 +141,7 @@ const CreateMissionDialog = (props) => {
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
     return !!mission.region && Array.isArray(mission.districts) && mission.districts.length > 0 && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
-      && !!mission.endYear && (endDate > startDate);
+      && !!mission.endYear && (endDate > startDate) && !!mission.missionDate;
   };
 
   const save = async () => {
@@ -351,6 +357,32 @@ const CreateMissionDialog = (props) => {
                 </Typography>
               )}
             </div>
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <MedicalControllerPicker
+              multiple
+              value={mission.auditors}
+              excludeIds={currentInteractiveUserId ? [currentInteractiveUserId] : []}
+              label={formatMessage(intl, MODULE_NAME, "createMission.auditors")}
+              onChange={(value) => updateField("auditors", value ?? [])}
+            />
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="createMission.missionDate"
+              value={mission.missionDate}
+              required
+              onChange={(value) => updateField("missionDate", value)}
+            />
+            {errors.missionDate && (
+              <Typography className={classes.errorText}>
+                {errors.missionDate}
+              </Typography>
+            )}
           </Grid>
         </Grid>
       </DialogContent>

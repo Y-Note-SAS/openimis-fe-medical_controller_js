@@ -77,7 +77,11 @@ const MainPanel = (props) => {
             id
             user {
               id
+<<<<<<< HEAD
               username
+=======
+              loginName
+>>>>>>> 9ee3fd84a406df3cedca6280a2ce339bf362e1f7
               lastName
               otherNames
             }
@@ -91,9 +95,13 @@ const MainPanel = (props) => {
   const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
     .map((edge) => edge.node?.user)
     .filter(Boolean);
-  const auditorsLabel = auditors
-    .map((user) => `${user.lastName ?? ""} ${user.otherNames ?? ""} (${user.username ?? ""})`.trim())
-    .join(", ");
+  const auditorOptions = auditors.map((user) => ({
+    id: user.id,
+    interactiveId: user.id,
+    username: user.loginName,
+    lastName: user.lastName,
+    otherNames: user.otherNames,
+  }));
 
   const currentYear = new Date().getFullYear();
 
@@ -118,7 +126,7 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.region")}
         />
       </Grid>
-      <Grid item xs={2} className={classes.item}>
+      <Grid item xs={displayedDistricts.length < 3 ? 4 : 6} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
@@ -150,11 +158,12 @@ const MainPanel = (props) => {
         />
       </Grid>
       <Grid item xs={12} sm={6} md={3} className={classes.item}>
-        <TextInput
-          module={MODULE_NAME}
-          label="medical_controller.missions.auditors"
-          value={auditorsLabel}
+        <PublishedComponent
+          pubRef="medical_controller.MedicalControllerPicker"
+          multiple
           readOnly
+          value={auditorOptions}
+          label={formatMessage("medical_controller.missions.auditors")}
         />
       </Grid>
       <Grid item xs={6} md={3} className={classes.item}>
@@ -204,6 +213,15 @@ const MainPanel = (props) => {
                 />
               </Grid>
             </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDate"
+              value={edited?.missionDate}
+              readOnly
+            />
           </Grid>
         </Grid>
       </Grid>
