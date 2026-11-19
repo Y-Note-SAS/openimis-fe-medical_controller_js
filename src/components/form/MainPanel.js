@@ -122,7 +122,7 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.region")}
         />
       </Grid>
-      <Grid item xs={2} className={classes.item}>
+      <Grid item xs={displayedDistricts.length < 3 ? 4 : 6} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
