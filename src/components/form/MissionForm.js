@@ -10,7 +10,8 @@ import {
   combine,
   ErrorBoundary,
   useTranslations,
-  baseApiUrl
+  baseApiUrl,
+  decodeId,
 } from "@openimis/fe-core";
 import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@material-ui/core";
 import GetAppIcon from "@material-ui/icons/GetApp";
@@ -41,13 +42,20 @@ const MissionForm = (props) => {
   const error = useSelector((state) => state.medical_controller?.mission?.error ?? null);
   const claimsMissionCode = useSelector((state) => state.medical_controller?.claims?.missionCode ?? null);
   const allClaimsAudited = useSelector((state) => state.medical_controller?.claims?.allAudited ?? false);
+  const currentUser = useSelector((state) => state.core?.user);
   const [mission, setMission] = useState({});
   const [showSampleActions, setShowSampleActions] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const actions = [];
+  // le chef de mission est celui qui a cree la mission
+  const isChief =
+    (!!mission?.user?.id && !!currentUser?.id && decodeId(mission.user.id) === currentUser.id) ||
+    (!!currentUser?.username && mission?.user?.username === currentUser.username);
+
   const canCloseMission =
-    showSampleActions
+    isChief
+    && showSampleActions
     && !!mission?.missionCode
     && mission?.status != MISSION_STATUS_CLOSED
     && claimsMissionCode === mission?.missionCode
