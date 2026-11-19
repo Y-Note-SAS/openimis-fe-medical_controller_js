@@ -77,11 +77,7 @@ const MainPanel = (props) => {
             id
             user {
               id
-<<<<<<< HEAD
-              username
-=======
               loginName
->>>>>>> 9ee3fd84a406df3cedca6280a2ce339bf362e1f7
               lastName
               otherNames
             }
