@@ -15,6 +15,7 @@ import {
   ConstantBasedPicker,
   MonthPicker,
   YearPicker,
+  useGraphqlQuery,
 } from "@openimis/fe-core";
 import { MISSION_STATUS, MODULE_NAME } from "../../constants";
 import { getMonth, getYear } from "../../helpers/utils";
@@ -66,6 +67,34 @@ const MainPanel = (props) => {
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
 
+  // Auditeurs de la mission (lecture seule)
+  const missionCode = edited?.missionCode;
+  const { data: missionUsersData } = useGraphqlQuery(
+    `query MissionAuditors($missionCode: String) {
+      missionsUsers(mission_MissionCode: $missionCode, first: 100) {
+        edges {
+          node {
+            id
+            user {
+              id
+              username
+              lastName
+              otherNames
+            }
+          }
+        }
+      }
+    }`,
+    { missionCode },
+    { skip: !missionCode },
+  );
+  const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
+    .map((edge) => edge.node?.user)
+    .filter(Boolean);
+  const auditorsLabel = auditors
+    .map((user) => `${user.lastName ?? ""} ${user.otherNames ?? ""} (${user.username ?? ""})`.trim())
+    .join(", ");
+
   const currentYear = new Date().getFullYear();
 
   return (
@@ -116,8 +145,16 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="medical_controller.MedicalControllerPicker"
           value={edited.user}
-          label={formatMessage("medical_controller.missions.medicalController")}
+          label={formatMessage("medical_controller.missions.chief")}
           readOnly={readOnly}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={3} className={classes.item}>
+        <TextInput
+          module={MODULE_NAME}
+          label="missions.auditors"
+          value={auditorsLabel}
+          readOnly
         />
       </Grid>
       <Grid item xs={6} md={3} className={classes.item}>
