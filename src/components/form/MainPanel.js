@@ -138,7 +138,7 @@ const MainPanel = (props) => {
       <Grid item xs={12} sm={6} md={3} className={classes.item}>
         <TextInput
           module={MODULE_NAME}
-          label="medical_controller.missions.auditors"
+          label="missions.auditors"
           value={auditorsLabel}
           readOnly
         />
