@@ -50,9 +50,8 @@ const MissionForm = (props) => {
   const actions = [];
   // le chef de mission est celui qui a cree la mission
   const isChief =
-    !!mission?.user &&
-    (((currentUser?.id) && decodeId(mission.user.id) === currentUser.id) ||
-      (!!currentUser?.username && mission.user.username === currentUser.username));
+    (!!mission?.user?.id && !!currentUser?.id && decodeId(mission.user.id) === currentUser.id) ||
+    (!!currentUser?.username && mission?.user?.username === currentUser.username);
 
   const canCloseMission =
     isChief
