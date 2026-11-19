@@ -44,5 +44,6 @@
   "medical_controller.missions.missionDate": "Mission date",
   "medical_controller.missions.missionDateFrom": "Mission date from",
   "medical_controller.missions.missionDateTo": "to",
-  "createMission.missionDate": "Mission date"
+  "createMission.missionDate": "Mission date",
+  "createMission.auditors": "Auditors"
 }
