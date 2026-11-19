@@ -91,9 +91,13 @@ const MainPanel = (props) => {
   const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
     .map((edge) => edge.node?.user)
     .filter(Boolean);
-  const auditorsLabel = auditors
-    .map((user) => `${user.lastName ?? ""} ${user.otherNames ?? ""} (${user.loginName ?? ""})`.trim())
-    .join(", ");
+  const auditorOptions = auditors.map((user) => ({
+    id: user.id,
+    interactiveId: user.id,
+    username: user.loginName,
+    lastName: user.lastName,
+    otherNames: user.otherNames,
+  }));
 
   const currentYear = new Date().getFullYear();
 
@@ -150,11 +154,12 @@ const MainPanel = (props) => {
         />
       </Grid>
       <Grid item xs={12} sm={6} md={3} className={classes.item}>
-        <TextInput
-          module={MODULE_NAME}
-          label="missions.auditors"
-          value={auditorsLabel}
+        <PublishedComponent
+          pubRef="medical_controller.MedicalControllerPicker"
+          multiple
           readOnly
+          value={auditorOptions}
+          label={formatMessage("medical_controller.missions.auditors")}
         />
       </Grid>
       <Grid item xs={6} md={3} className={classes.item}>
