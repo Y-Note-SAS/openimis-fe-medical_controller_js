@@ -21,6 +21,7 @@
   "missions.details.notFound": "Mission non trouvée.",
   "missions.status.open": "Open",
   "missions.status.closed": "Closed",
+  "missions.searcher.districts.remainingTooltip": "{{count}} districts remaining: {{districts}}",
   "medical_controller.missionSample.category.null": "All Categories",
   "medical_controller.missionSample.category.1": "Category 1",
   "medical_controller.missionSample.category.2": "Category 2",
@@ -37,5 +38,14 @@
   "medical_controller.missionForm.confirmClose.message": "",
   "closeMission.mutationLabel": "",
   "auditReport.dateFrom": "Date from",
-  "auditReport.dateTo": "Date to"
+  "auditReport.dateTo": "Date to",
+  "MissionServicePicker.label": "Service type",
+  "MissionServicePicker.placeholder": "Search a service",
+  "medical_controller.missions.missionDate": "Mission date",
+  "medical_controller.missions.missionDateFrom": "Mission date from",
+  "medical_controller.missions.missionDateTo": "to",
+  "createMission.missionDate": "Mission date",
+  "createMission.auditors": "Auditors",
+  "medical_controller.missions.chief": "Mission chief",
+  "medical_controller.missions.auditors": "Auditors"
 }

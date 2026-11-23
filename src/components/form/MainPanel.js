@@ -15,6 +15,7 @@ import {
   ConstantBasedPicker,
   MonthPicker,
   YearPicker,
+  useGraphqlQuery,
 } from "@openimis/fe-core";
 import { MISSION_STATUS, MODULE_NAME } from "../../constants";
 import { getMonth, getYear } from "../../helpers/utils";
@@ -50,8 +51,53 @@ const MainPanel = (props) => {
     displayedHealthFacilities = [];
   }
 
+  // Normalize edited.districts into a safe array of district objects
+  const _rawDistricts = edited?.districts;
+  let displayedDistricts = [];
+  if (Array.isArray(_rawDistricts)) {
+    displayedDistricts = _rawDistricts.map((d) => d?.district ?? d);
+  } else if (_rawDistricts && Array.isArray(_rawDistricts.edges)) {
+    displayedDistricts = _rawDistricts.edges.map((e) => e?.node?.district ?? e?.node ?? e);
+  } else if (edited?.district) {
+    displayedDistricts = [edited.district];
+  } else {
+    displayedDistricts = [];
+  }
+
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
+
+  // Auditeurs de la mission (lecture seule)
+  const missionCode = edited?.missionCode;
+  const { data: missionUsersData } = useGraphqlQuery(
+    `query MissionAuditors($missionCode: String) {
+      missionsUsers(mission_MissionCode: $missionCode, first: 100) {
+        edges {
+          node {
+            id
+            user {
+              id
+              loginName
+              lastName
+              otherNames
+            }
+          }
+        }
+      }
+    }`,
+    { missionCode },
+    { skip: !missionCode },
+  );
+  const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
+    .map((edge) => edge.node?.user)
+    .filter(Boolean);
+  const auditorOptions = auditors.map((user) => ({
+    id: user.id,
+    interactiveId: user.id,
+    username: user.loginName,
+    lastName: user.lastName,
+    otherNames: user.otherNames,
+  }));
 
   const currentYear = new Date().getFullYear();
 
@@ -76,13 +122,14 @@ const MainPanel = (props) => {
           label={formatMessage("medical_controller.missions.region")}
         />
       </Grid>
-      <Grid item xs={2} className={classes.item}>
+      <Grid item xs={displayedDistricts.length < 3 ? 4 : 6} className={classes.item}>
         <PublishedComponent
           pubRef="location.LocationPicker"
           locationLevel={1}
-          value={edited.district}
+          value={displayedDistricts}
           region={edited.region}
           parentLocation={edited.region}
+          multiple
           readOnly={readOnly}
           label={formatMessage("medical_controller.missions.district")}
         />
@@ -91,7 +138,7 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="location.HealthFacilityPicker"
           value={displayedHealthFacilities}
-          district={edited.district}
+          district={displayedDistricts}
           region={edited.region}
           multiple
           autoComplete
@@ -102,8 +149,17 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="medical_controller.MedicalControllerPicker"
           value={edited.user}
-          label={formatMessage("medical_controller.missions.medicalController")}
+          label={formatMessage("medical_controller.missions.chief")}
           readOnly={readOnly}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={3} className={classes.item}>
+        <PublishedComponent
+          pubRef="medical_controller.MedicalControllerPicker"
+          multiple
+          readOnly
+          value={auditorOptions}
+          label={formatMessage("medical_controller.missions.auditors")}
         />
       </Grid>
       <Grid item xs={6} md={3} className={classes.item}>
@@ -153,6 +209,15 @@ const MainPanel = (props) => {
                 />
               </Grid>
             </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDate"
+              value={edited?.missionDate}
+              readOnly
+            />
           </Grid>
         </Grid>
       </Grid>
