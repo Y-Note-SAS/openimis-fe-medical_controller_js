@@ -69,6 +69,7 @@ const MissionsSearcher = (props) => {
       ["user", true],
       ["startDate", false],
       ["endDate", false],
+      ["missionDate", false],
       ["status", true],
     ],
     []
