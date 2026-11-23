@@ -29,7 +29,7 @@ const MissionsSearcher = (props) => {
     () => [
       ["missionCode", true],
       ["region__name", true],
-      ["district__name", true],
+      ["districts", true],
       ["user", true],
       ["startDate", false],
       ["endDate", false],
