@@ -65,7 +65,7 @@ const MissionsSearcher = (props) => {
     () => [
       ["missionCode", true],
       ["region__name", true],
-      ["district__name", true],
+      ["districts__name", true],
       ["user", true],
       ["startDate", false],
       ["endDate", false],
