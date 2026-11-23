@@ -115,6 +115,9 @@ const CreateMissionDialog = (props) => {
     const districts = Array.isArray(value) ? value : [];
     setMission((prev) => ({
       ...prev,
+      region: districts.length === 0
+        ? null
+        : (prev?.region ?? districts.find((d) => d?.parent)?.parent ?? null),
       healthFacilities: districts.length ? prev.healthFacilities : [],
       districts,
     }));
@@ -124,9 +127,11 @@ const CreateMissionDialog = (props) => {
   };
 
   const onChangeHealthFacilities = (value) => {
+    const healthFacilities = Array.isArray(value) ? value : value ? [value] : [];
     setMission((prev) => ({
       ...prev,
-      healthFacilities: value ?? [],
+      healthFacilities,
+      districts: healthFacilities.length ? prev.districts : [],
     }));
   };
 
