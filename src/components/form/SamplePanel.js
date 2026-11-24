@@ -100,7 +100,7 @@ const SamplePanel = (props) => {
     // Clé utilisée pour remonter le ClaimSearcher et réinitialiser ses filtres internes
     const [sampleGenKey, setSampleGenKey] = useState(0);
     // Valeurs locales des pourcentages (permettent de garder les choix de l'utilisateur)
-    const [sampleValues, setSampleValues] = useState({ category1: 0, category2: 0, category3: 0, category4: 0, category5: 0 });
+    const [sampleValues, setSampleValues] = useState({ category1: 0, category2: 0, category3: 0, category4: 0, category5: 0  });
     const lastProcessedSignature = useRef(null);
     const {
         fetchingClaims,

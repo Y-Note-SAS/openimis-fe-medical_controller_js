@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { injectIntl } from "react-intl";
 import {
   Button,
@@ -10,7 +10,6 @@ import {
   Divider,
   Grid,
   Typography,
-  TextField,
   FormLabel
 } from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
@@ -18,7 +17,6 @@ import {
   combine,
   formatMessage,
   PublishedComponent,
-  TextInput,
   withModulesManager,
   MonthPicker,
   YearPicker,
@@ -26,6 +24,7 @@ import {
   decodeId,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
+import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -72,19 +71,23 @@ const styles = (theme) => ({
 
 const EMPTY_STATE = {
   region: null,
-  district: null,
+  districts: [],
   healthFacilities: [],
   startMonth: "",
   startYear: "",
   endMonth: "",
   endYear: "",
+  missionDate: null,
+  auditors: [],
 };
 
 const CreateMissionDialog = (props) => {
-  const { classes, intl, modulesManager, open, onClose, onCreated } = props;
-  const dispatch = useDispatch();
+  const { classes, intl, open, onClose } = props;
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
+  );
+  const currentInteractiveUserId = useSelector(
+    (state) => state.core?.user?.i_user?.id
   );
 
   const [mission, setMission] = useState(EMPTY_STATE);
@@ -109,17 +112,20 @@ const CreateMissionDialog = (props) => {
     setMission((prev) => ({
       ...prev,
       region: value,
-      district: null,
+      districts: [],
       healthFacilities: [],
     }));
   };
 
   const handleDistrictChange = (value) => {
+    const districts = Array.isArray(value) ? value : [];
     setMission((prev) => ({
       ...prev,
-      region: value?.parent ?? mission.region,
-      district: value,
-      healthFacilities: !!value ? mission.healthFacilities : [],
+      region: districts.length === 0
+        ? null
+        : (prev?.region ?? districts.find((d) => d?.parent)?.parent ?? null),
+      healthFacilities: districts.length ? prev.healthFacilities : [],
+      districts,
     }));
     if (errors.district) {
       setErrors((prev) => ({ ...prev, district: null }));
@@ -127,53 +133,55 @@ const CreateMissionDialog = (props) => {
   };
 
   const onChangeHealthFacilities = (value) => {
+    const healthFacilities = Array.isArray(value) ? value : value ? [value] : [];
     setMission((prev) => ({
       ...prev,
-      region: value?.length > 0 ? value[0]?.location?.parent : mission.region,
-      district: value?.length > 0 ? value[0]?.location : mission.district,
-      healthFacilities: value ?? [],
+      healthFacilities,
+      districts: healthFacilities.length ? prev.districts : [],
     }));
   };
 
   const cansave = () => {
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
-    return !!mission.region && !!mission.district && !!mission.healthFacilities
+    return !!mission.region && Array.isArray(mission.districts) && mission.districts.length > 0 && !!mission.healthFacilities
       && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
-      && !!mission.endYear && (endDate > startDate);
+      && !!mission.endYear && (endDate > startDate) && !!mission.missionDate;
   };
 
   const save = async () => {
-    // Garde de sécurité : vérifier que le district existe avant de continuer
-    if (!mission.district) return;
+    // Garde de sécurité : vérifier qu'au moins un district existe avant de continuer
+    if (!Array.isArray(mission.districts) || mission.districts.length === 0) return;
 
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
 
-    // Vérifier l'unicité de la mission pour ce district sur cette période
+    // Vérifier l'unicité de la mission pour chaque district sur cette période
     try {
-      const availabilityResponse = await props.checkMissionAvailability(
-        decodeId(mission.district.id),
-        startDate,
-        endDate,
-      );
+      for (const district of mission.districts) {
+        const availabilityResponse = await props.checkMissionAvailability(
+          decodeId(district.id),
+          startDate,
+          endDate,
+        );
 
-      // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
-      if (!availabilityResponse || availabilityResponse.error) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
-        }));
-        return;
-      }
+        // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
+        if (!availabilityResponse || availabilityResponse.error) {
+          setErrors((prev) => ({
+            ...prev,
+            district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
+          }));
+          return;
+        }
 
-      const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
-      if (available === false) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
-        }));
-        return;
+        const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
+        if (available === false) {
+          setErrors((prev) => ({
+            ...prev,
+            district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
+          }));
+          return;
+        }
       }
     } catch (err) {
       console.error("checkMissionAvailability error", err);
@@ -186,7 +194,11 @@ const CreateMissionDialog = (props) => {
 
     try {
       const response = await props.createMission(
-        mission,
+        {
+          ...mission,
+          districts: mission.districts,
+          healthFacilities: mission.healthFacilities,
+        },
         formatMessage(intl, MODULE_NAME, "createMission"),
       );
 
@@ -254,12 +266,13 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.LocationPicker"
               locationLevel={1}
-              value={mission.district}
+              value={mission.districts}
               region={mission.region}
               withNull
               onChange={handleDistrictChange}
               required
               parentLocation={mission.region}
+              multiple
             />
             {errors.district && (
               <Typography color="error" variant="body2" style={{ marginTop: 4 }}>
@@ -272,7 +285,7 @@ const CreateMissionDialog = (props) => {
             <PublishedComponent
               pubRef="location.HealthFacilityPicker"
               value={mission.healthFacilities}
-              district={mission.district}
+              district={mission.districts}
               region={mission.region}
               multiple
               required
@@ -349,6 +362,32 @@ const CreateMissionDialog = (props) => {
                 </Typography>
               )}
             </div>
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <MedicalControllerPicker
+              multiple
+              value={mission.auditors}
+              excludeIds={currentInteractiveUserId ? [currentInteractiveUserId] : []}
+              label={formatMessage(intl, MODULE_NAME, "createMission.auditors")}
+              onChange={(value) => updateField("auditors", value ?? [])}
+            />
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="createMission.missionDate"
+              value={mission.missionDate}
+              required
+              onChange={(value) => updateField("missionDate", value)}
+            />
+            {errors.missionDate && (
+              <Typography className={classes.errorText}>
+                {errors.missionDate}
+              </Typography>
+            )}
           </Grid>
         </Grid>
       </DialogContent>

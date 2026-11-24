@@ -54,10 +54,11 @@ export function fetchMissions(filters) {
       "id",
       "missionCode",
       "region { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
-      "district { uuid, id, code, name, parent {id, uuid, code, name, type}, type }",
+      "districts { edges { node { district { uuid, id, code, name, parent {id, uuid, code, name, type}, type } } } }",
       "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
+      "missionDate",
       "status",
       "dateCreated"
     ],
@@ -73,9 +74,10 @@ export function fetchMission(mm, missionCode) {
     "user { id lastName otherNames username }",
     "healthFacilities { edges { node { id healthFacility { id uuid code name level} } } }",
     "region { uuid id code name parent {id uuid code name type} type }",
-    "district { uuid id code name parent {id uuid code name type} type }",
+    "districts { edges { node { district { uuid id code name parent {id uuid code name type} type }}}}",
     "startDate",
     "endDate",
+    "missionDate",
     "status",
     "percentageOne",
     "percentageTwo",
@@ -121,12 +123,35 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
+  // type de prestation (categorie 1) : services selectionnes -> codes
+  const serviceValues = missionFilters?.services?.value;
+  const serviceCodes = (Array.isArray(serviceValues) ? serviceValues : [])
+    .map((service) => (typeof service === "string" ? service : service?.code))
+    .filter(Boolean);
+  const servicesArg = serviceCodes.length
+    ? `, services: [${serviceCodes.map((code) => `"${code}"`).join(", ")}]`
+    : "";
+
+  // Filtre periode (date de visite) : bornes incluses, envoyees au back
+  const dateFrom = missionFilters?.dateFrom?.value;
+  const dateTo = missionFilters?.dateTo?.value;
+  const claimDateFilters = [
+    dateFrom ? `claim_DateClaimed_Gte: "${dateFrom}"` : null,
+    dateTo ? `claim_DateClaimed_Lte: "${dateTo}"` : null,
+  ].filter(Boolean);
+  // tri par defaut : du plus ancien au plus recent
+  const claimsArgs = [
+    claimsPagination,
+    ...claimDateFilters,
+    'orderBy: ["claim__date_claimed"]',
+  ].join(", ");
+
   const payload = `
     query {
       claimsForHealthFacilities(
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}"
-        ${category != null ? `,category: "${category}"` : ""}
+        ${category != null ? `,category: "${category}"` : ""}${servicesArg}
       ) {
         totalCateg1
         totalCateg2
@@ -139,7 +164,7 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
         percentageCateg4
         percentageCateg5
         allAudited
-        claims (${claimsPagination}) {
+        claims (${claimsArgs}) {
           pageInfo {
             hasNextPage
             hasPreviousPage
@@ -186,12 +211,23 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 }
 
 export function createMission(mission, clientMutationLabel) {
+  const districts = Array.isArray(mission.districts)
+    ? mission.districts
+    : mission.districts
+      ? [mission.districts]
+      : [];
+
   const mutationInput = `
       regionId: ${decodeId(mission.region.id)}
-      districtId: ${decodeId(mission.district.id)}
+      districtIds: [${districts.map((d) => decodeId(d.id)).join(", ")}]
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
+      missionDate: "${mission.missionDate}"
+      userIds: [${(mission.auditors ?? [])
+        .map((auditor) => decodeId(auditor.interactiveId))
+        .filter((id) => id != null)
+        .join(", ")}]
     `;
 
   let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
