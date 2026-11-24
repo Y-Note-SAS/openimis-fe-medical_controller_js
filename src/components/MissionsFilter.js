@@ -4,6 +4,7 @@ import {
   ControlledField,
   ConstantBasedPicker,
   PublishedComponent,
+  decodeId,
   TextInput,
   useDebounceCb,
   useTranslations,
@@ -60,11 +61,22 @@ const MissionsFilter = (props) => {
     value,
     filter: value ? `region_Id: "${value.id}"` : null,
   });
-  const districtFilter = (value) => ({
-    id: "district",
-    value,
-    filter: value ? `district_Id: "${value.id}"` : null,
-  });
+  const districtFilter = (value) => {
+    const districts = Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []);
+    const districtIds = [...new Set(districts
+      .map((district) => district?.id)
+      .filter(Boolean)
+      .map((id) => parseInt(decodeId(id), 10))
+      .filter((id) => Number.isInteger(id)))];
+
+    return {
+      id: "district",
+      value: districts,
+      filter: districtIds.length
+        ? `districts_District_Id_In: [${districtIds.join(', ')}]`
+        : null,
+    };
+  };
   const controllerFilter = (value) => ({
     id: "medicalController",
     value,
@@ -84,6 +96,16 @@ const MissionsFilter = (props) => {
     id: "endDate",
     value,
     filter: value ? `endDate_Lte: "${value}"` : null,
+  });
+  const missionDateFromFilter = (value) => ({
+    id: "missionDateFrom",
+    value,
+    filter: value ? `missionDate_Gte: "${value}T00:00:00"` : null,
+  });
+  const missionDateToFilter = (value) => ({
+    id: "missionDateTo",
+    value,
+    filter: value ? `missionDate_Lte: "${value}T23:59:59"` : null,
   });
 
   const onCodeChange = useDebounceCb((value) => onChangeFilters([codeFilter(value)]), debounceTime);
@@ -200,11 +222,14 @@ const MissionsFilter = (props) => {
               locationLevel={1}
               value={filterValue("district")}
               region={filterValue("region")}
+              multiple
               withNull
               onChange={(value) => {
-                const updates = [districtFilter(value)];
-                if (value && value.parent) {
-                  updates.push(regionFilter(value.parent));
+                const districts = Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []);
+                const updates = [districtFilter(districts)];
+                const parent = districts.find((district) => district?.parent)?.parent;
+                if (parent) {
+                  updates.push(regionFilter(parent));
                 }
                 onChangeFilters(updates);
               }}
@@ -304,6 +329,37 @@ const MissionsFilter = (props) => {
                 </Grid>
               </div>
             </div>
+          </Grid>
+        }
+      />
+      <ControlledField
+        module={MODULE_NAME}
+        id="MissionsFilter.missionDateFrom"
+        field={
+          <Grid item xs={12} md={2} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDateFrom"
+              value={filterValue("missionDateFrom")}
+              onChange={(value) => onChangeFilters([missionDateFromFilter(value)])}
+            />
+          </Grid>
+        }
+      />
+
+      <ControlledField
+        module={MODULE_NAME}
+        id="MissionsFilter.missionDateTo"
+        field={
+          <Grid item xs={12} md={2} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDateTo"
+              value={filterValue("missionDateTo")}
+              onChange={(value) => onChangeFilters([missionDateToFilter(value)])}
+            />
           </Grid>
         }
       />
