@@ -4,6 +4,7 @@ import {
   ControlledField,
   ConstantBasedPicker,
   PublishedComponent,
+  decodeId,
   TextInput,
   useDebounceCb,
   useTranslations,
@@ -60,11 +61,22 @@ const MissionsFilter = (props) => {
     value,
     filter: value ? `region_Id: "${value.id}"` : null,
   });
-  const districtFilter = (value) => ({
-    id: "district",
-    value,
-    filter: value ? `district_Id: "${value.id}"` : null,
-  });
+  const districtFilter = (value) => {
+    const districts = Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []);
+    const districtIds = [...new Set(districts
+      .map((district) => district?.id)
+      .filter(Boolean)
+      .map((id) => parseInt(decodeId(id), 10))
+      .filter((id) => Number.isInteger(id)))];
+
+    return {
+      id: "district",
+      value: districts,
+      filter: districtIds.length
+        ? `districts_District_Id_In: [${districtIds.join(', ')}]`
+        : null,
+    };
+  };
   const controllerFilter = (value) => ({
     id: "medicalController",
     value,
@@ -210,11 +222,14 @@ const MissionsFilter = (props) => {
               locationLevel={1}
               value={filterValue("district")}
               region={filterValue("region")}
+              multiple
               withNull
               onChange={(value) => {
-                const updates = [districtFilter(value)];
-                if (value && value.parent) {
-                  updates.push(regionFilter(value.parent));
+                const districts = Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []);
+                const updates = [districtFilter(districts)];
+                const parent = districts.find((district) => district?.parent)?.parent;
+                if (parent) {
+                  updates.push(regionFilter(parent));
                 }
                 onChangeFilters(updates);
               }}
