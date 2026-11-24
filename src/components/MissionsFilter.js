@@ -48,6 +48,7 @@ const MissionsFilter = (props) => {
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
   const filterValue = (key) => filters?.[key]?.value ?? null;
   const debounceTime = modulesManager.getConf("fe-admin", "debounceTime", 500);
+  const filterTextFieldValue = (k) => !!filters && !!filters[k] ? filters[k].value : "";
 
   const codeFilter = (value) => ({
     id: "code",
@@ -167,7 +168,7 @@ const MissionsFilter = (props) => {
               module={MODULE_NAME}
               name="code"
               label={formatMessage("medical_controller.missions.code")}
-              value={filterValue("code")}
+              value={filterTextFieldValue("code")}
               onChange={onCodeChange}
             />
           </Grid>
