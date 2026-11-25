@@ -22,6 +22,7 @@
   "missions.details.notFound": "Mission non trouvée.",
   "missions.status.open": "Open",
   "missions.status.closed": "Closed",
+  "missions.searcher.districts.remainingTooltip": "{{count}} districts remaining: {{districts}}",
   "medical_controller.missionSample.category.null": "All Categories",
   "medical_controller.missionSample.category.1": "Category 1",
   "medical_controller.missionSample.category.2": "Category 2",
