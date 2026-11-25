@@ -24,7 +24,6 @@ import {
   YearPicker,
   journalize,
   decodeId,
-  TextInput,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
 import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
