@@ -22,6 +22,7 @@ const MissionsSearcher = (props) => {
     "medical_controller.missions.medicalController",
     "medical_controller.missions.startDate",
     "medical_controller.missions.endDate",
+    "medical_controller.missions.missionDate",
     "medical_controller.missions.status",
   ];
 
@@ -33,6 +34,7 @@ const MissionsSearcher = (props) => {
       (mission) => formatMedicalController(mission.user),
       (mission) => formatMonthYear(mission.startDate),
       (mission) => formatMonthYear(mission.endDate),
+      (mission) => formatDateFromISO(mission.missionDate),
       (mission) => formatMessage(`missions.status.${mission.status}`),
     ],
     []
