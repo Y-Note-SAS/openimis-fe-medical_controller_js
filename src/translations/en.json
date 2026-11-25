@@ -40,5 +40,11 @@
   "closeMission.mutationLabel": "",
   "auditReport.dateFrom": "Date from",
   "auditReport.dateTo": "Date to",
-  "createMission.auditors": "Auditors"
+  "createMission.auditors": "Auditors",
+  "MissionServicePicker.label": "Service type",
+  "MissionServicePicker.placeholder": "Search a service",
+  "medical_controller.missions.missionDate": "Mission date",
+  "medical_controller.missions.missionDateFrom": "Mission date from",
+  "medical_controller.missions.missionDateTo": "to",
+  "createMission.missionDate": "Mission date"
 }
