@@ -46,6 +46,55 @@ export function checkMissionAvailability(districtId, startDate, endDate) {
   return graphql(payload, "MEDICAL_CONTROLLER_MISSION_AVAILABILITY");
 }
 
+/**
+ * Verifie la disponibilite des districts et des formations sanitaires sur une periode.
+ *
+ * Parametres envoyes au backend :
+ *  - districtIds       : liste des ids (decodes) des districts selectionnes
+ *  - healthFacilityIds : liste des ids (decodes) des formations sanitaires saisies
+ *  - startDate         : premier jour du mois de debut (YYYY-MM-DD)
+ *  - endDate           : dernier jour du mois de fin (YYYY-MM-DD)
+ *
+ * Reponse attendue du backend :
+ *   checkHealthFacilitiesAvailability {
+ *     districts { id uuid code name ... }
+ *     healthFacilities { id uuid code name ... }
+ *   }
+ *
+ * Ces deux listes representent les elements disponibles pour la periode :
+ * ce sont eux qui doivent rester affiches et etre crees avec la mission.
+ */
+export function checkHealthFacilitiesAvailability(
+  districtIds,
+  healthFacilityIds,
+  startDate,
+  endDate,
+) {
+  const toIdList = (value) =>
+    (Array.isArray(value) ? value : value ? [value] : [])
+      .map((item) => decodeId(item?.id ?? item))
+      .filter((id) => id != null);
+
+  const districts = toIdList(districtIds);
+  const healthFacilities = toIdList(healthFacilityIds);
+
+  const payload = `
+    query {
+      checkMissionAvailability(
+        districtIds: [${districts.join(", ")}],
+        healthFacilityIds: [${healthFacilities.join(", ")}],
+        startDate: "${startDate}",
+        endDate: "${endDate}"
+      ) {
+        districtIds
+        healthFacilityIds
+      }
+    }
+  `;
+
+  return graphql(payload, "MEDICAL_CONTROLLER_HEALTH_FACILITIES_AVAILABILITY");
+}
+
 export function fetchMissions(filters) {
   const query = formatPageQueryWithCount(
     "missions",
