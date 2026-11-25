@@ -203,6 +203,10 @@ export function createMission(mission, clientMutationLabel) {
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
+      userIds: [${(mission.auditors ?? [])
+        .map((auditor) => decodeId(auditor.interactiveId))
+        .filter((id) => id != null)
+        .join(", ")}]
       missionDate: "${mission.missionDate}"
     `;
 

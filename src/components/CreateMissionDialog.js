@@ -26,6 +26,7 @@ import {
   decodeId,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
+import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
 import { connect } from "react-redux";
@@ -78,6 +79,7 @@ const EMPTY_STATE = {
   startYear: "",
   endMonth: "",
   endYear: "",
+  auditors: [],
   missionDate: null,
 };
 
@@ -87,6 +89,15 @@ const CreateMissionDialog = (props) => {
   const isSubmitting = useSelector(
     (state) => state.medical_controller?.isCreating ?? false
   );
+  const currentInteractiveUserId = useSelector(
+    (state) => state.core?.user?.i_user?.id
+  );
+  const currentUser = useSelector((state) => state.core?.user);
+  // Le chef de mission est le createur de la mission : affiche en lecture seule
+  const chiefName =
+    [currentUser?.i_user?.last_name, currentUser?.i_user?.other_names]
+      .filter(Boolean)
+      .join(" ") || currentUser?.username || "";
 
   const [mission, setMission] = useState(EMPTY_STATE);
   const [errors, setErrors] = useState({});
@@ -186,8 +197,21 @@ const CreateMissionDialog = (props) => {
     }
 
     try {
+      // Le chef de mission (utilisateur courant) ne doit jamais partir comme auditeur
+      const auditors = (mission.auditors ?? []).filter(
+        (auditor) =>
+          (!currentInteractiveUserId ||
+            auditor?.interactiveId !== currentInteractiveUserId) &&
+          (!currentUser?.username || auditor?.username !== currentUser.username),
+      );
+
       const response = await props.createMission(
-        mission,
+        {
+          ...mission,
+          auditors,
+          districts: mission.districts,
+          healthFacilities: mission.healthFacilities,
+        },
         formatMessage(intl, MODULE_NAME, "createMission"),
       );
 
@@ -240,6 +264,15 @@ const CreateMissionDialog = (props) => {
 
       <DialogContent className={classes.dialogContent}>
         <Grid container>
+          <Grid item xs={12} className={classes.fieldItem}>
+            <TextInput
+              module={MODULE_NAME}
+              label="missions.chief"
+              value={chiefName}
+              readOnly
+            />
+          </Grid>
+
           <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
               pubRef="location.LocationPicker"
@@ -350,6 +383,17 @@ const CreateMissionDialog = (props) => {
                 </Typography>
               )}
             </div>
+          </Grid>
+
+          <Grid item xs={12} className={classes.fieldItem}>
+            <MedicalControllerPicker
+              multiple
+              value={mission.auditors}
+              excludeIds={currentInteractiveUserId ? [currentInteractiveUserId] : []}
+              excludeUsernames={currentUser?.username ? [currentUser.username] : []}
+              label={formatMessage(intl, MODULE_NAME, "createMission.auditors")}
+              onChange={(value) => updateField("auditors", value ?? [])}
+            />
           </Grid>
 
           <Grid item xs={12} className={classes.fieldItem}>
