@@ -196,8 +196,21 @@ const CreateMissionDialog = (props) => {
     }
 
     try {
+      // Le chef de mission (utilisateur courant) ne doit jamais partir comme auditeur
+      const auditors = (mission.auditors ?? []).filter(
+        (auditor) =>
+          (!currentInteractiveUserId ||
+            auditor?.interactiveId !== currentInteractiveUserId) &&
+          (!currentUser?.username || auditor?.username !== currentUser.username),
+      );
+
       const response = await props.createMission(
-        mission,
+        {
+          ...mission,
+          auditors,
+          districts: mission.districts,
+          healthFacilities: mission.healthFacilities,
+        },
         formatMessage(intl, MODULE_NAME, "createMission"),
       );
 
@@ -376,6 +389,7 @@ const CreateMissionDialog = (props) => {
               multiple
               value={mission.auditors}
               excludeIds={currentInteractiveUserId ? [currentInteractiveUserId] : []}
+              excludeUsernames={currentUser?.username ? [currentUser.username] : []}
               label={formatMessage(intl, MODULE_NAME, "createMission.auditors")}
               onChange={(value) => updateField("auditors", value ?? [])}
             />
