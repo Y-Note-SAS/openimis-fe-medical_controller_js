@@ -88,9 +88,13 @@ const MainPanel = (props) => {
     { missionCode },
     { skip: !missionCode },
   );
+  // Le chef de mission (createur) ne doit jamais apparaitre dans les auditeurs,
+  // y compris pour les missions creees avant le controle cote backend.
+  const chiefLoginName = edited?.user?.username;
   const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
     .map((edge) => edge.node?.user)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((user) => !chiefLoginName || user.loginName !== chiefLoginName);
   const auditorOptions = auditors.map((user) => ({
     id: user.id,
     interactiveId: user.id,

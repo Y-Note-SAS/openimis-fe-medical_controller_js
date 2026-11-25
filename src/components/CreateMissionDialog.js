@@ -22,6 +22,7 @@ import {
   YearPicker,
   journalize,
   decodeId,
+  TextInput,
 } from "@openimis/fe-core";
 import { createMission, checkMissionAvailability } from "../actions";
 import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
@@ -89,6 +90,12 @@ const CreateMissionDialog = (props) => {
   const currentInteractiveUserId = useSelector(
     (state) => state.core?.user?.i_user?.id
   );
+  const currentUser = useSelector((state) => state.core?.user);
+  // Le chef de mission est le createur de la mission : affiche en lecture seule
+  const chiefName =
+    [currentUser?.i_user?.last_name, currentUser?.i_user?.other_names]
+      .filter(Boolean)
+      .join(" ") || currentUser?.username || "";
 
   const [mission, setMission] = useState(EMPTY_STATE);
   const [errors, setErrors] = useState({});
@@ -251,6 +258,15 @@ const CreateMissionDialog = (props) => {
 
       <DialogContent className={classes.dialogContent}>
         <Grid container>
+          <Grid item xs={12} className={classes.fieldItem}>
+            <TextInput
+              module={MODULE_NAME}
+              label="missions.chief"
+              value={chiefName}
+              readOnly
+            />
+          </Grid>
+
           <Grid item xs={12} className={classes.fieldItem}>
             <PublishedComponent
               pubRef="location.LocationPicker"
