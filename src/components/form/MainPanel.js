@@ -200,6 +200,15 @@ const MainPanel = (props) => {
               </Grid>
             </Grid>
           </Grid>
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDate"
+              value={edited?.missionDate}
+              readOnly
+            />
+          </Grid>
         </Grid>
       </Grid>
       <Grid item xs={1} className={classes.item}>

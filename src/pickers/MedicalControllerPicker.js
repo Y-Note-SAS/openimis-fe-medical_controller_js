@@ -12,6 +12,8 @@ const MedicalControllerPicker = (props) => {
     readOnly,
     required,
     value,
+    excludeIds = [],
+    excludeUsernames = [],
     withLabel = true,
     withPlaceholder,
   } = props;
@@ -36,8 +38,20 @@ const MedicalControllerPicker = (props) => {
 
   const options = useMemo(() => {
     const nodes = data?.medicalControllers?.edges?.map((e) => e.node) ?? [];
-    return nodes.map((n) => ({ id: n.id, username: n.username, lastName: n.iUser?.lastName, otherNames: n.iUser?.otherNames }));
-  }, [data]);
+    return nodes
+      .filter(
+        (n) =>
+          !excludeIds.includes(n.iUser?.id) &&
+          !excludeUsernames.includes(n.username),
+      )
+      .map((n) => ({
+        id: n.id,
+        interactiveId: n.iUser?.id,
+        username: n.username,
+        lastName: n.iUser?.lastName,
+        otherNames: n.iUser?.otherNames,
+      }));
+  }, [data, excludeIds, excludeUsernames]);
 
   const formatMedicalController = (controller) =>
     controller ? `${controller.username} ${controller.lastName} ${controller.otherNames}` : "";

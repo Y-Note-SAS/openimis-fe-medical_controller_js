@@ -58,6 +58,7 @@ export function fetchMissions(filters) {
       "user { id, lastName, otherNames, username }",
       "startDate",
       "endDate",
+      "missionDate",
       "status",
       "dateCreated"
     ],
@@ -76,6 +77,7 @@ export function fetchMission(mm, missionCode) {
     "district { uuid id code name parent {id uuid code name type} type }",
     "startDate",
     "endDate",
+    "missionDate",
     "status",
     "percentageOne",
     "percentageTwo",
@@ -121,12 +123,21 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
+  // type de prestation (categorie 1) : services selectionnes -> codes
+  const serviceValues = missionFilters?.services?.value;
+  const serviceCodes = (Array.isArray(serviceValues) ? serviceValues : [])
+    .map((service) => (typeof service === "string" ? service : service?.code))
+    .filter(Boolean);
+  const servicesArg = serviceCodes.length
+    ? `, services: [${serviceCodes.map((code) => `"${code}"`).join(", ")}]`
+    : "";
+
   const payload = `
     query {
       claimsForHealthFacilities(
         healthFacilityIds: [${decodedIds}],
         missionCode: "${missionCode}"
-        ${category != null ? `,category: "${category}"` : ""}
+        ${category != null ? `,category: "${category}"` : ""}${servicesArg}
       ) {
         totalCateg1
         totalCateg2
@@ -192,6 +203,11 @@ export function createMission(mission, clientMutationLabel) {
       healthFacilityIds: [${mission.healthFacilities.map((hf) => decodeId(hf.id)).join(", ")}]
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
+      userIds: [${(mission.auditors ?? [])
+        .map((auditor) => decodeId(auditor.interactiveId))
+        .filter((id) => id != null)
+        .join(", ")}]
+      missionDate: "${mission.missionDate}"
     `;
 
   let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
