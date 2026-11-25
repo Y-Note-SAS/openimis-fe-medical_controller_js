@@ -39,5 +39,9 @@
   "medical_controller.missionForm.confirmClose.message": "",
   "closeMission.mutationLabel": "",
   "auditReport.dateFrom": "Date from",
-  "auditReport.dateTo": "Date to"
+  "auditReport.dateTo": "Date to",
+  "medical_controller.missions.missionDate": "Mission date",
+  "medical_controller.missions.missionDateFrom": "Mission date from",
+  "medical_controller.missions.missionDateTo": "to",
+  "createMission.missionDate": "Mission date"
 }
