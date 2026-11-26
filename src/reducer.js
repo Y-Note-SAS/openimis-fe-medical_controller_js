@@ -48,6 +48,8 @@ const DEFAULT_STATE = {
   createError: null,
   isUpdating: false,
   updateError: null,
+  isTreatingClaims: false,
+  treatClaimsError: null,
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -237,6 +239,12 @@ const reducer = (state = DEFAULT_STATE, action) => {
       return { ...state, isUpdating: false, updateError: null };
     case "MEDICAL_CONTROLLER_MISSION_UPDATE_ERR":
       return { ...state, isUpdating: false, updateError: formatServerError(action.payload) };
+    case "MEDICAL_CONTROLLER_TREAT_CLAIMS_REQ":
+      return { ...state, isTreatingClaims: true, treatClaimsError: null };
+    case "MEDICAL_CONTROLLER_TREAT_CLAIMS_RESP":
+      return { ...state, isTreatingClaims: false, treatClaimsError: null };
+    case "MEDICAL_CONTROLLER_TREAT_CLAIMS_ERR":
+      return { ...state, isTreatingClaims: false, treatClaimsError: formatServerError(action.payload) };
     case "MEDICAL_CONTROLLER_MISSION_HISTORY_REQ":
       return {
         ...state,
