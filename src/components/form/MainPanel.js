@@ -15,6 +15,7 @@ import {
   ConstantBasedPicker,
   MonthPicker,
   YearPicker,
+  useGraphqlQuery,
 } from "@openimis/fe-core";
 import { MISSION_STATUS, MODULE_NAME } from "../../constants";
 import { getMonth, getYear } from "../../helpers/utils";
@@ -52,6 +53,42 @@ const MainPanel = (props) => {
 
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations("medical_controller.MissionFormMainPanel", modulesManager);
+
+  // Auditeurs de la mission (lecture seule)
+  const missionCode = edited?.missionCode;
+  const { data: missionUsersData } = useGraphqlQuery(
+    `query MissionAuditors($missionCode: String) {
+      missionsUsers(mission_MissionCode: $missionCode, first: 100) {
+        edges {
+          node {
+            id
+            user {
+              id
+              loginName
+              lastName
+              otherNames
+            }
+          }
+        }
+      }
+    }`,
+    { missionCode },
+    { skip: !missionCode },
+  );
+  // Le chef de mission (createur) ne doit jamais apparaitre dans les auditeurs,
+  // y compris pour les missions creees avant le controle cote backend.
+  const chiefLoginName = edited?.user?.username;
+  const auditors = (missionUsersData?.missionsUsers?.edges ?? [])
+    .map((edge) => edge.node?.user)
+    .filter(Boolean)
+    .filter((user) => !chiefLoginName || user.loginName !== chiefLoginName);
+  const auditorOptions = auditors.map((user) => ({
+    id: user.id,
+    interactiveId: user.id,
+    username: user.loginName,
+    lastName: user.lastName,
+    otherNames: user.otherNames,
+  }));
 
   const currentYear = new Date().getFullYear();
 
@@ -102,8 +139,17 @@ const MainPanel = (props) => {
         <PublishedComponent
           pubRef="medical_controller.MedicalControllerPicker"
           value={edited.user}
-          label={formatMessage("medical_controller.missions.medicalController")}
+          label={formatMessage("medical_controller.missions.chief")}
           readOnly={readOnly}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={3} className={classes.item}>
+        <PublishedComponent
+          pubRef="medical_controller.MedicalControllerPicker"
+          multiple
+          readOnly
+          value={auditorOptions}
+          label={formatMessage("medical_controller.missions.auditors")}
         />
       </Grid>
       <Grid item xs={6} md={3} className={classes.item}>
@@ -153,6 +199,15 @@ const MainPanel = (props) => {
                 />
               </Grid>
             </Grid>
+          </Grid>
+          <Grid item xs={12} sm={6} className={classes.item}>
+            <PublishedComponent
+              pubRef="core.DatePicker"
+              module={MODULE_NAME}
+              label="medical_controller.missions.missionDate"
+              value={edited?.missionDate}
+              readOnly
+            />
           </Grid>
         </Grid>
       </Grid>
