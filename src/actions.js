@@ -123,6 +123,19 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
 
   const decodedIds = healthFacilityIds.map((hf) => decodeId(hf?.id ?? hf)).join(", ");
 
+  // Filtre periode (date de visite) : bornes incluses, envoyees au back
+  const dateFrom = missionFilters?.dateFrom?.value;
+  const dateTo = missionFilters?.dateTo?.value;
+  const claimDateFilters = [
+    dateFrom ? `claim_DateClaimed_Gte: "${dateFrom}"` : null,
+    dateTo ? `claim_DateClaimed_Lte: "${dateTo}"` : null,
+  ].filter(Boolean);
+  // tri par defaut : du plus ancien au plus recent
+  const claimsArgs = [
+    claimsPagination,
+    ...claimDateFilters,
+    'orderBy: ["claim__date_claimed"]',
+  ].join(", ");
   // type de prestation (categorie 1) : services selectionnes -> codes
   const serviceValues = missionFilters?.services?.value;
   const serviceCodes = (Array.isArray(serviceValues) ? serviceValues : [])
@@ -150,7 +163,7 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
         percentageCateg4
         percentageCateg5
         allAudited
-        claims (${claimsPagination}) {
+        claims (${claimsArgs}) {
           pageInfo {
             hasNextPage
             hasPreviousPage
