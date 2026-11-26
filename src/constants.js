@@ -19,3 +19,10 @@ export const DEFAULT_SAMPLE = {
     category4: 100,
     category5: 10,
 };
+
+// Statut "Rejete" d'un claim (cf. claim.STATUS_REJECTED)
+export const CLAIM_STATUS_REJECTED = 1;
+
+// Action de traitement des claims (mutation treatClaims)
+export const CLAIM_ACTION_REHABILITATE = "rehabilitate";
+export const CLAIM_ACTION_ADOPT = "adopt";
