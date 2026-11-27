@@ -16,8 +16,8 @@ import {
     useHistory,
     historyPush
 } from "@openimis/fe-core";
-import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE } from "../../constants";
-import { fetchTotalSample, fetchClaimSample, fetchMissionHistory } from "../../actions";
+import { MISSION_CATEGORIES, MODULE_NAME, MISSION_STATUS_CLOSED, PERCENTAGE_OPTIONS, DEFAULT_SAMPLE, CLAIM_STATUS_REJECTED, CLAIM_ACTION_REHABILITATE, CLAIM_ACTION_ADOPT } from "../../constants";
+import { fetchTotalSample, fetchClaimSample, fetchMissionHistory, treatClaims } from "../../actions";
 import FilterMissionPanel from "./FilterMissionPanel";
 import MissionHistoryPanel from "./MissionHistoryPanel";
 
@@ -278,6 +278,73 @@ const SamplePanel = (props) => {
         );
     };
 
+    // La rehabilitation n'est possible que si TOUS les claims selectionnes sont rejetes
+    const canRehabilitateSelected = (selection) =>
+        !!selection &&
+        selection.length > 0 &&
+        selection.every((claim) => claim?.status === CLAIM_STATUS_REJECTED);
+
+    // L'adoption n'est possible que si AUCUN claim selectionne n'est rejete
+    const canAdoptSelected = (selection) =>
+        !!selection &&
+        selection.length > 0 &&
+        selection.every((claim) => claim?.status !== CLAIM_STATUS_REJECTED);
+
+    // Applique une action de traitement (rehabilitate / adopt) a la selection
+    const treatSelected = async (selection, action, mutationLabelKey) => {
+        const claimIds = (selection ?? []).map((claim) => claim?.id).filter(Boolean);
+        if (!claimIds.length) return;
+
+        try {
+            await dispatch(
+                treatClaims(
+                    claimIds,
+                    action,
+                    formatMessage(mutationLabelKey),
+                ),
+            );
+        } catch (err) {
+            console.error("treatClaims error", err);
+        }
+
+        // Rafraichir l'echantillon et l'historique de la mission
+        dispatch(fetchClaimSample(modulesManager, buildMissionFilters(edited)));
+        if (edited?.missionCode) {
+            dispatch(fetchMissionHistory(modulesManager, edited.missionCode));
+        }
+    };
+
+    const rehabilitateSelected = async (selection) => {
+        if (!canRehabilitateSelected(selection)) return;
+        await treatSelected(
+            selection,
+            CLAIM_ACTION_REHABILITATE,
+            "MissionSamplePanel.rehabilitate.mutationLabel",
+        );
+    };
+
+    const adoptSelected = async (selection) => {
+        if (!canAdoptSelected(selection)) return;
+        await treatSelected(
+            selection,
+            CLAIM_ACTION_ADOPT,
+            "MissionSamplePanel.adopt.mutationLabel",
+        );
+    };
+
+    const sampleActions = [
+        {
+            label: "MissionSamplePanel.rehabilitate",
+            enabled: canRehabilitateSelected,
+            action: rehabilitateSelected,
+        },
+        {
+            label: "MissionSamplePanel.adopt",
+            enabled: canAdoptSelected,
+            action: adoptSelected,
+        },
+    ];
+
     return (
         <Fragment>
             {!!edited && edited.status != MISSION_STATUS_CLOSED && (<Paper className={classes.paper}>
@@ -338,7 +405,7 @@ const SamplePanel = (props) => {
                         pubRef="claim.ClaimSearcher"
                         modulesManager={modulesManager}
                         defaultFilters={buildMissionFilters(edited)}
-                        actions={[]}
+                        actions={sampleActions}
                         onDoubleClick={onClaimDoubleClick}
                         filterPane={(searcherProps) => (
                             <FilterMissionPanel

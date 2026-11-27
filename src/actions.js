@@ -6,6 +6,7 @@ import {
   decodeId,
   fetchMutation,
   formatQuery,
+  journalize,
 } from "@openimis/fe-core";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "./helpers/utils";
 
@@ -93,6 +94,70 @@ export function checkHealthFacilitiesAvailability(
   `;
 
   return graphql(payload, "MEDICAL_CONTROLLER_HEALTH_FACILITIES_AVAILABILITY");
+}
+
+/* Applique un traitement (ex: "rehabilitate") a une liste de claims.
+*
+* Mutation GraphQL envoyee :
+*   mutation {
+*     treatClaims(input: { action: "rehabilitate", claimIds: [138, 140] }) {
+*       internalId
+*       clientMutationId
+*     }
+*   }
+*
+* @param {Array<number|string>} claimIds ids internes (decodes) des claims
+* @param {string} action action a appliquer ("rehabilitate")
+* @param {string} clientMutationLabel libelle de la mutation
+*/
+export function treatClaims(claimIds, action, clientMutationLabel) {
+  const ids = (Array.isArray(claimIds) ? claimIds : [claimIds])
+    .map((id) => decodeId(id))
+    .filter((id) => id != null);
+
+  const mutationInput = `
+      action: "${action}"
+      claimIds: [${ids.join(", ")}]
+    `;
+
+  const mutation = formatMutation("treatClaims", mutationInput, clientMutationLabel);
+  const requestedDateTime = new Date();
+
+  return async (dispatch) => {
+    // Ajoute immediatement l'entree au journal (statut 0 => spinner visible)
+    dispatch(
+      journalize({
+        clientMutationId: mutation.clientMutationId,
+        clientMutationLabel,
+        requestDateTime: requestedDateTime,
+      }),
+    );
+
+    const response = await dispatch(
+      graphql(
+        mutation.payload,
+        [
+          "MEDICAL_CONTROLLER_TREAT_CLAIMS_REQ",
+          "MEDICAL_CONTROLLER_TREAT_CLAIMS_RESP",
+          "MEDICAL_CONTROLLER_TREAT_CLAIMS_ERR",
+        ],
+        {
+          clientMutationId: mutation.clientMutationId,
+          clientMutationLabel,
+          requestedDateTime,
+        },
+      ),
+    );
+
+    // Met a jour le statut de l'entree du journal (succes / erreur)
+    try {
+      dispatch(fetchMutation(mutation.clientMutationId));
+    } catch (err) {
+      console.error("fetchMutation error", err);
+    }
+
+    return response;
+  };
 }
 
 export function fetchMissions(filters) {
@@ -224,6 +289,7 @@ export function fetchClaimSample(mm, missionFilters, claimsPageInfo = {}, pagina
           edges {
             node{
               claim {
+                id
                 code,
                 healthFacility { id uuid name code }
                 uuid
@@ -274,9 +340,9 @@ export function createMission(mission, clientMutationLabel) {
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
       missionDate: "${mission.missionDate}"
       userIds: [${(mission.auditors ?? [])
-        .map((auditor) => decodeId(auditor.interactiveId))
-        .filter((id) => id != null)
-        .join(", ")}]
+      .map((auditor) => decodeId(auditor.interactiveId))
+      .filter((id) => id != null)
+      .join(", ")}]
     `;
 
   let mutation = formatMutation("createMission", mutationInput, clientMutationLabel);
