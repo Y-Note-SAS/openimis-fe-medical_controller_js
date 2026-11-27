@@ -428,9 +428,14 @@ const SamplePanel = (props) => {
                         claims={claims}
                         claimsPageInfo={claimsPageInfo}
                         fetchClaimsSample={(prms) => {
+                            // Conserver les filtres courants (categorie, services, periode...)
+                            // lors de la pagination : ne pas repartir des filtres par defaut.
+                            const activeFilters = Object.keys(filters ?? {}).length
+                                ? filters
+                                : buildMissionFilters(edited);
                             dispatch(fetchClaimSample(
                                 modulesManager,
-                                buildMissionFilters(edited),
+                                activeFilters,
                                 claimsPageInfo,
                                 prms,
                             ));
