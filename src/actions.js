@@ -48,20 +48,68 @@ export function checkMissionAvailability(districtId, startDate, endDate) {
 }
 
 /**
- * Applique un traitement (ex: "rehabilitate") a une liste de claims.
+ * Verifie la disponibilite des districts et des formations sanitaires sur une periode.
  *
- * Mutation GraphQL envoyee :
- *   mutation {
- *     treatClaims(input: { action: "rehabilitate", claimIds: [138, 140] }) {
- *       internalId
- *       clientMutationId
- *     }
+ * Parametres envoyes au backend :
+ *  - districtIds       : liste des ids (decodes) des districts selectionnes
+ *  - healthFacilityIds : liste des ids (decodes) des formations sanitaires saisies
+ *  - startDate         : premier jour du mois de debut (YYYY-MM-DD)
+ *  - endDate           : dernier jour du mois de fin (YYYY-MM-DD)
+ *
+ * Reponse attendue du backend :
+ *   checkHealthFacilitiesAvailability {
+ *     districts { id uuid code name ... }
+ *     healthFacilities { id uuid code name ... }
  *   }
  *
- * @param {Array<number|string>} claimIds ids internes (decodes) des claims
- * @param {string} action action a appliquer ("rehabilitate")
- * @param {string} clientMutationLabel libelle de la mutation
+ * Ces deux listes representent les elements disponibles pour la periode :
+ * ce sont eux qui doivent rester affiches et etre crees avec la mission.
  */
+export function checkHealthFacilitiesAvailability(
+  districtIds,
+  healthFacilityIds,
+  startDate,
+  endDate,
+) {
+  const toIdList = (value) =>
+    (Array.isArray(value) ? value : value ? [value] : [])
+      .map((item) => decodeId(item?.id ?? item))
+      .filter((id) => id != null);
+
+  const districts = toIdList(districtIds);
+  const healthFacilities = toIdList(healthFacilityIds);
+
+  const payload = `
+    query {
+      checkMissionAvailability(
+        districtIds: [${districts.join(", ")}],
+        healthFacilityIds: [${healthFacilities.join(", ")}],
+        startDate: "${startDate}",
+        endDate: "${endDate}"
+      ) {
+        districtIds
+        healthFacilityIds
+      }
+    }
+  `;
+
+  return graphql(payload, "MEDICAL_CONTROLLER_HEALTH_FACILITIES_AVAILABILITY");
+}
+
+/* Applique un traitement (ex: "rehabilitate") a une liste de claims.
+*
+* Mutation GraphQL envoyee :
+*   mutation {
+*     treatClaims(input: { action: "rehabilitate", claimIds: [138, 140] }) {
+*       internalId
+*       clientMutationId
+*     }
+*   }
+*
+* @param {Array<number|string>} claimIds ids internes (decodes) des claims
+* @param {string} action action a appliquer ("rehabilitate")
+* @param {string} clientMutationLabel libelle de la mutation
+*/
 export function treatClaims(claimIds, action, clientMutationLabel) {
   const ids = (Array.isArray(claimIds) ? claimIds : [claimIds])
     .map((id) => decodeId(id))
@@ -284,9 +332,9 @@ export function createMission(mission, clientMutationLabel) {
       startDate: "${getFirstDayOfMonth(mission.startYear, mission.startMonth)}"
       endDate: "${getLastDayOfMonth(mission.endYear, mission.endMonth)}"
       userIds: [${(mission.auditors ?? [])
-        .map((auditor) => decodeId(auditor.interactiveId))
-        .filter((id) => id != null)
-        .join(", ")}]
+      .map((auditor) => decodeId(auditor.interactiveId))
+      .filter((id) => id != null)
+      .join(", ")}]
       missionDate: "${mission.missionDate}"
     `;
 

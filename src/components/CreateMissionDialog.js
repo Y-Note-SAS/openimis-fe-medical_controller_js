@@ -25,7 +25,7 @@ import {
   journalize,
   decodeId,
 } from "@openimis/fe-core";
-import { createMission, checkMissionAvailability } from "../actions";
+import { createMission, checkMissionAvailability, checkHealthFacilitiesAvailability } from "../actions";
 import MedicalControllerPicker from "../pickers/MedicalControllerPicker";
 import { MODULE_NAME } from "../constants";
 import { getFirstDayOfMonth, getLastDayOfMonth } from "../helpers/utils";
@@ -69,6 +69,11 @@ const styles = (theme) => ({
     alignItems: "center",
     gap: theme.spacing(1),
   },
+  errorText: {
+    color: theme.palette.error.main,
+    fontSize: "0.80rem",
+    marginTop: theme.spacing(0.5),
+  },
 });
 
 const EMPTY_STATE = {
@@ -101,7 +106,19 @@ const CreateMissionDialog = (props) => {
 
   const [mission, setMission] = useState(EMPTY_STATE);
   const [errors, setErrors] = useState({});
+  // Etat de la verification de disponibilite : loading / error / empty / verified
+  // verified = true uniquement si la derniere verification a reussi avec une liste non vide
+  const [availability, setAvailability] = useState({
+    loading: false,
+    error: false,
+    empty: false,
+    verified: false,
+  });
   const districtRef = useRef(null);
+  const lastAvailabilityKeyRef = useRef(null);
+
+  const resetAvailability = () =>
+    setAvailability({ loading: false, error: false, empty: false, verified: false });
 
   // Remonter jusqu'au champ district quand une erreur y est affichée
   useEffect(() => {
@@ -124,6 +141,8 @@ const CreateMissionDialog = (props) => {
       district: null,
       healthFacilities: [],
     }));
+    lastAvailabilityKeyRef.current = null;
+    resetAvailability();
   };
 
   const handleDistrictChange = (value) => {
@@ -136,6 +155,9 @@ const CreateMissionDialog = (props) => {
     if (errors.district) {
       setErrors((prev) => ({ ...prev, district: null }));
     }
+    // La selection a change : on invalide le resultat de la verification precedente
+    lastAvailabilityKeyRef.current = null;
+    resetAvailability();
   };
 
   const onChangeHealthFacilities = (value) => {
@@ -145,14 +167,39 @@ const CreateMissionDialog = (props) => {
       district: value?.length > 0 ? value[0]?.location : mission.district,
       healthFacilities: value ?? [],
     }));
+    if (errors.healthFacilities) {
+      setErrors((prev) => ({ ...prev, healthFacilities: null }));
+    }
+    // La selection a change : on invalide le resultat de la verification precedente
+    lastAvailabilityKeyRef.current = null;
+    resetAvailability();
   };
 
   const cansave = () => {
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
-    return !!mission.region && !!mission.district && !!mission.healthFacilities
-      && mission.healthFacilities.length > 0 && !!mission.startMonth && !!mission.endMonth && !!mission.startYear
-      && !!mission.endYear && (endDate > startDate) && !!mission.missionDate;
+    const fieldsValid =
+      !!mission.region &&
+      !!mission.district &&
+      !!mission.healthFacilities &&
+      mission.healthFacilities.length > 0 &&
+      !!mission.startMonth &&
+      !!mission.endMonth &&
+      !!mission.startYear &&
+      !!mission.endYear &&
+      endDate > startDate &&
+      !!mission.missionDate;
+
+    // Bloque la sauvegarde si la verification de disponibilite est en cours,
+    // en erreur, si elle a retourne une liste vide, ou si elle n'a pas encore
+    // ete effectuee avec succes (verified).
+    const availabilityValid =
+      availability.verified &&
+      !availability.loading &&
+      !availability.error &&
+      !availability.empty;
+
+    return fieldsValid && availabilityValid;
   };
 
   const save = async () => {
@@ -161,40 +208,6 @@ const CreateMissionDialog = (props) => {
 
     const startDate = getFirstDayOfMonth(mission.startYear, mission.startMonth);
     const endDate = getLastDayOfMonth(mission.endYear, mission.endMonth);
-
-    // Vérifier l'unicité de la mission pour ce district sur cette période
-    try {
-      const availabilityResponse = await props.checkMissionAvailability(
-        decodeId(mission.district.id),
-        startDate,
-        endDate,
-      );
-
-      // Si la vérification a échoué (erreur GraphQL ou réseau), bloquer la création
-      if (!availabilityResponse || availabilityResponse.error) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
-        }));
-        return;
-      }
-
-      const available = availabilityResponse?.payload?.data?.checkMissionAvailability;
-      if (available === false) {
-        setErrors((prev) => ({
-          ...prev,
-          district: formatMessage(intl, MODULE_NAME, "createMission.missionExist"),
-        }));
-        return;
-      }
-    } catch (err) {
-      console.error("checkMissionAvailability error", err);
-      setErrors((prev) => ({
-        ...prev,
-        district: formatMessage(intl, MODULE_NAME, "createMission.availabilityError"),
-      }));
-      return;
-    }
 
     try {
       // Le chef de mission (utilisateur courant) ne doit jamais partir comme auditeur
@@ -229,6 +242,8 @@ const CreateMissionDialog = (props) => {
   const handleClose = () => {
     setMission(EMPTY_STATE);
     setErrors({});
+    lastAvailabilityKeyRef.current = null;
+    resetAvailability();
     onClose();
   };
 
@@ -251,6 +266,245 @@ const CreateMissionDialog = (props) => {
       }
     }
   };
+
+  // Normalise un id (encode ou non) pour pouvoir comparer selection et reponse backend
+  const normalizeId = (value) => {
+    if (value == null) return null;
+    try {
+      return decodeId(value);
+    } catch (e) {
+      return value;
+    }
+  };
+
+  // Garde uniquement les elements presents dans la liste retournee par le backend.
+  // La liste retournee peut contenir des objets ({ id, uuid }) ou directement des ids.
+  const keepAvailable = (selected, available) => {
+    const keys = new Set();
+    (available ?? []).forEach((item) => {
+      if (item == null) return;
+      if (typeof item === "object") {
+        [item.id, item.uuid].forEach((value) => {
+          if (value == null) return;
+          keys.add(String(value));
+          const normalized = normalizeId(value);
+          if (normalized != null) keys.add(String(normalized));
+        });
+      } else {
+        keys.add(String(item));
+      }
+    });
+
+    return (selected ?? []).filter((item) => {
+      const rawId = typeof item === "object" ? item?.id ?? item?.uuid : item;
+      if (rawId == null) return false;
+      const normalized = normalizeId(rawId);
+      return keys.has(String(rawId)) || (normalized != null && keys.has(String(normalized)));
+    });
+  };
+
+  // Declenche la verification de disponibilite au changement de la periode (date de fin)
+  // ou de la selection (district / formations sanitaires)
+  useEffect(() => {
+    const { startMonth, startYear, endMonth, endYear } = mission;
+    const hasDistrict = !!mission.district;
+    const hasHealthFacilities =
+      Array.isArray(mission.healthFacilities) && mission.healthFacilities.length > 0;
+
+    // Prerequis incomplets : aucune verification possible, le bouton reste desactive
+    if (!startMonth || !startYear || !endMonth || !endYear) {
+      resetAvailability();
+      return;
+    }
+
+    const startDate = getFirstDayOfMonth(startYear, startMonth);
+    const endDate = getLastDayOfMonth(endYear, endMonth);
+    if (!(endDate > startDate)) {
+      resetAvailability();
+      return;
+    }
+
+    if (!hasDistrict && !hasHealthFacilities) {
+      resetAvailability();
+      return;
+    }
+
+    const districtKey = mission.district ? mission.district?.id ?? mission.district?.uuid : "";
+    const healthFacilityKey = (mission.healthFacilities ?? [])
+      .map((hf) => hf?.id ?? hf?.uuid)
+      .filter(Boolean)
+      .join(",");
+    const availabilityKey = `${startDate}|${endDate}|${districtKey}|${healthFacilityKey}`;
+    if (lastAvailabilityKeyRef.current === availabilityKey) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      setAvailability({ loading: true, error: false, empty: false, verified: false });
+
+      try {
+        const response = await props.checkHealthFacilitiesAvailability(
+          mission.district ? [mission.district] : [],
+          mission.healthFacilities,
+          startDate,
+          endDate,
+        );
+
+        if (cancelled) return;
+
+        if (!response || response.error) {
+          setAvailability({ loading: false, error: true, empty: false, verified: false });
+          setErrors((prev) => ({
+            ...prev,
+            healthFacilities: formatMessage(
+              intl,
+              MODULE_NAME,
+              "createMission.availabilityError",
+            ),
+          }));
+          return;
+        }
+
+        // La requete peut exposer le resultat sous l'un ou l'autre de ces noms
+        const responseData = response?.payload?.data;
+        const availabilityData =
+          responseData?.checkHealthFacilitiesAvailability ??
+          responseData?.checkMissionAvailability;
+        if (!availabilityData) {
+          setAvailability({ loading: false, error: true, empty: false, verified: false });
+          return;
+        }
+
+        // La reponse peut etre :
+        //  - un objet { districts: [...], healthFacilities: [...] }
+        //  - un objet { districtIds: [...], healthFacilityIds: [...] }
+        //  - directement une liste de formations sanitaires
+        const pickList = (obj, keys) => {
+          for (const key of keys) {
+            if (obj && obj[key] != null) return obj[key];
+          }
+          return null;
+        };
+
+        const availableDistricts = Array.isArray(availabilityData)
+          ? null
+          : pickList(availabilityData, ["districts", "districtIds"]);
+        const availableHealthFacilitiesList = Array.isArray(availabilityData)
+          ? availabilityData
+          : pickList(availabilityData, ["healthFacilities", "healthFacilityIds"]) ?? [];
+
+        // Aucun district disponible sur la periode => liste vide
+        if (Array.isArray(availableDistricts) && availableDistricts.length === 0) {
+          setAvailability({ loading: false, error: false, empty: true, verified: false });
+          setErrors((prev) => ({
+            ...prev,
+            district: formatMessage(
+              intl,
+              MODULE_NAME,
+              "createMission.noDistrictAvailable",
+            ),
+          }));
+          return;
+        }
+
+        // Aucune formation sanitaire disponible sur la periode => liste vide
+        if (
+          !Array.isArray(availableHealthFacilitiesList) ||
+          availableHealthFacilitiesList.length === 0
+        ) {
+          setAvailability({ loading: false, error: false, empty: true, verified: false });
+          setErrors((prev) => ({
+            ...prev,
+            healthFacilities: formatMessage(
+              intl,
+              MODULE_NAME,
+              "createMission.noHealthFacilityAvailable",
+            ),
+          }));
+          return;
+        }
+
+        const availableHealthFacilities = keepAvailable(
+          mission.healthFacilities,
+          availableHealthFacilitiesList,
+        );
+
+        // Si le filtrage ne laisse aucune formation sanitaire, on bloque aussi
+        if (availableHealthFacilities.length === 0) {
+          setAvailability({ loading: false, error: false, empty: true, verified: false });
+          setErrors((prev) => ({
+            ...prev,
+            healthFacilities: formatMessage(
+              intl,
+              MODULE_NAME,
+              "createMission.noHealthFacilityAvailable",
+            ),
+          }));
+          return;
+        }
+
+        // Si la reponse contient aussi le district, on verifie qu'il est disponible
+        if (Array.isArray(availableDistricts) && mission.district) {
+          const availableDistrictSelection = keepAvailable(
+            [mission.district],
+            availableDistricts,
+          );
+          if (availableDistrictSelection.length === 0) {
+            setAvailability({ loading: false, error: false, empty: true, verified: false });
+            setErrors((prev) => ({
+              ...prev,
+              district: formatMessage(
+                intl,
+                MODULE_NAME,
+                "createMission.noDistrictAvailable",
+              ),
+            }));
+            return;
+          }
+        }
+
+        // Le filtrage peut modifier la selection : on memorise la cle resultante
+        // pour ne pas relancer une requete identique (evite la boucle).
+        const filteredHealthFacilityKey = availableHealthFacilities
+          .map((hf) => hf?.id ?? hf?.uuid)
+          .filter(Boolean)
+          .join(",");
+        lastAvailabilityKeyRef.current = `${startDate}|${endDate}|${districtKey}|${filteredHealthFacilityKey}`;
+
+        setMission((prev) => ({
+          ...prev,
+          healthFacilities: availableHealthFacilities,
+        }));
+        setAvailability({ loading: false, error: false, empty: false, verified: true });
+        setErrors((prev) => ({ ...prev, healthFacilities: null, district: null }));
+      } catch (err) {
+        if (cancelled) return;
+        console.error("checkHealthFacilitiesAvailability error", err);
+        setAvailability({ loading: false, error: true, empty: false, verified: false });
+        setErrors((prev) => ({
+          ...prev,
+          healthFacilities: formatMessage(
+            intl,
+            MODULE_NAME,
+            "createMission.availabilityError",
+          ),
+        }));
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    mission.startMonth,
+    mission.startYear,
+    mission.endMonth,
+    mission.endYear,
+    mission.district,
+    mission.healthFacilities,
+  ]);
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -433,7 +687,16 @@ const CreateMissionDialog = (props) => {
   );
 };
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({ createMission, journalize, checkMissionAvailability }, dispatch);
+const mapDispatchToProps = (dispatch) =>
+  bindActionCreators(
+    {
+      createMission,
+      journalize,
+      checkMissionAvailability,
+      checkHealthFacilitiesAvailability,
+    },
+    dispatch,
+  );
 
 const enhance = combine(withModulesManager, withStyles(styles), connect(null, mapDispatchToProps));
 
